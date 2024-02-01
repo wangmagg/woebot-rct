@@ -21,7 +21,7 @@ dat_pdf_summary <- dat_pdf |>
             w5_complete = sum(`Week 5 PDF_complete` == 2, na.rm=TRUE),
             w6_complete = sum(`Week 6 PDF_complete` == 2, na.rm=TRUE),
             w7_complete = sum(`Week 7 PDF_complete` == 2, na.rm=TRUE),
-            w8_complete = sum(`Week 8 PDF_complete` == 2, na.rm=TRUE)) |>
+            w8_complete = sum(`Week 8 PDF_complete` == 2, na.rm=TRUE), .groups='drop') |>
   mutate(actual = rowSums(across(w1_complete:w8_complete), na.rm=TRUE)) |>
   select(participant_id, actual)
 
@@ -42,7 +42,7 @@ dat_pdf_self_rep_actual_long <- dat_pdf_self_rep_actual |>
 
 dat_pdf_summary_by_measure_and_cnt <- dat_pdf_self_rep_actual_long |>
   group_by(measure, cnt) |>
-  summarize(n = n()) |>
+  summarize(n = n(), .groups='keep') |>
   ungroup(cnt) |>
   mutate(p = n / sum(n) * 100) |>
   ungroup()
@@ -55,6 +55,6 @@ dat_pdf_summary_by_measure <- dat_pdf_self_rep_actual_long |>
             sd_cnt = sd(cnt, na.rm=TRUE),
             median_cnt = median(cnt, na.rm=TRUE),
             n_atleast_4 = sum(cnt >= 4, na.rm=TRUE),
-            p_atleast_4 = n_atleast_4 / n() * 100)
+            p_atleast_4 = n_atleast_4 / n() * 100, .groups='drop')
 write.csv(dat_pdf_summary_by_measure, 
           file.path(save_dir, 'summary_by_measure.csv'), row.names=FALSE)

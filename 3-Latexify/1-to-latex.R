@@ -170,6 +170,7 @@ for (timept in c('mid', 'eot', 'followup')) {
 subgroup_base_fname <- file.path(ANALYSIS_OUT_DIR, 
                                  '1-Descriptives-Output', 
                                  '2b-Outcome-Vars-Summary', 
+                                 'baseline',
                                  'subgroups_baseline-retained_descriptive_summary.csv')
 if (file.exists(subgroup_base_fname)) {
   subgroups_base_descrip <- read.csv(subgroup_base_fname) 
@@ -180,7 +181,7 @@ if (file.exists(subgroup_base_fname)) {
 for (timept in c('mid', 'eot', 'followup')) {
   timept_dir <- file.path(ANALYSIS_OUT_DIR, '1-Descriptives-Output', '2b-Outcome-Vars-Summary', timept)
   subgroup_timept_fname <- str_c('subgroups_', timept, '-retained_descriptive_summary.csv')
-  subgroup_timept_path <- file.path(timept_dir, timept_fname)
+  subgroup_timept_path <- file.path(timept_dir, subgroup_timept_fname)
   if (file.exists(subgroup_timept_path)) {
     descrip <- read.csv(subgroup_timept_path)
     descrip_latex <- make_timept_descrip_latex(descrip, keep_vars = c('subgroup', 'level'))

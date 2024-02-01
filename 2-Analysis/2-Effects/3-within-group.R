@@ -1,5 +1,4 @@
-source('src/preprocessing/data_recoding_fns.R')
-source('src/analysis/ttest_fns.R')
+source('0-Config/0-config.R')
 
 # Define directory for saving results
 save_dir <- file.path(ANALYSIS_OUT_DIR, '2-Effects-Output', '3-Within-Group')
@@ -29,9 +28,9 @@ for (timept in timepts) {
   
   all_var_res <- data.frame()
   for (var in outcome_vars_timept) {
-    dat_outcome_to_fit <- subset_for_secondary_outcome_analysis(dat_outcome_regression,
-                                                                var, 
-                                                                str_c('delta', timept, var, sep='_'))
+    dat_outcome_to_fit <- subset_has_outcome(dat_outcome_regression,
+                                             str_c('delta', timept, var, sep='_'),
+                                             timept)
     for (group_lbl in group_lbls) {
       res <- run_paired_ttest(dat_outcome_to_fit,
                               timept = timept,

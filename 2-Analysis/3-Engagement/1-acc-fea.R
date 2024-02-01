@@ -10,7 +10,8 @@ if (!dir.exists(save_dir)) {
 # Read input data file
 dat_outcome_regression <- read.csv(file.path(DATA_OUT_DIR, 'dat_analysis_outcome-regression.csv'))
 
-dat <- dat |>
+dat <- dat_outcome_regression |>
+  filter(retained_eot == 1) |>
   mutate(eot_csq = 
            case_when(
              group == 1 ~ eot_csq_grp1,
@@ -18,11 +19,6 @@ dat <- dat |>
          group = as.factor(group)) |>
   mutate_at(c("group"), ~relevel(.x, ref=2)) |>
   select(-eot_csq_grp1, -eot_csq_grp2)
-
-save_dir <- 'output/acceptability-feasibility'
-if (!dir.exists(save_dir)) {
-  dir.create(save_dir, recursive = TRUE)
-}
 
 # Get correlations in treated group (W-SUDS)
 dat_grp1 <- dat |> filter(group == 1)
@@ -69,9 +65,12 @@ csq.labs <- c("CSQ")
 names(csq.labs) <- c("eot_csq")
 groups.labs <- c("W-SUDS", "Psychoeducation")
 names(groups.labs) <- c("1", "2")
-ggplot(dat_subset_long |> filter(str_detect(var_name, 'csq')), aes(x=delta_eot_p30, y=value, color=group)) + 
+dat_subset_long_csq <- dat_subset_long |> 
+  filter(str_detect(var_name, 'csq')) |>
+  drop_na(value)
+ggplot(dat_subset_long_csq, aes(x=delta_eot_p30, y=value, color=group)) + 
   geom_point() + 
-  geom_smooth(method="lm") +
+  geom_smooth(method="lm", formula='y~x') +
   facet_grid(cols=vars(var_name),
              rows=vars(group),
              labeller = labeller(var_name=csq.labs,
@@ -81,13 +80,16 @@ ggplot(dat_subset_long |> filter(str_detect(var_name, 'csq')), aes(x=delta_eot_p
   scale_color_discrete(name = 'Group',
                        labels = c('1'='W-SUDS', '2'='Psychoed')) +
   theme_bw()
-ggsave(file.path(save_dir, 'csq_sub-use-occ_scatter.png'))
+ggsave(file.path(save_dir, 'csq_sub-use-occ_scatter.png'), width=5, height=5)
 
 urpi.labs <- c("URP-I Acceptability", "URP-I Feasibility")
 names(urpi.labs) <- c("eot_urpi_a", "eot_urpi_f")
-ggplot(dat_subset_long |> filter(str_detect(var_name, 'urpi')), aes(x=delta_eot_p30, y=value, color=group)) + 
+dat_subset_long_urpi <- dat_subset_long |> 
+  filter(str_detect(var_name, 'urpi')) |>
+  drop_na(value)
+ggplot(dat_subset_long_urpi, aes(x=delta_eot_p30, y=value, color=group)) + 
   geom_point() + 
-  geom_smooth(method="lm") +
+  geom_smooth(method="lm", formula='y~x') +
   facet_grid(cols=vars(var_name),
              rows=vars(group),
              labeller = labeller(var_name=urpi.labs,
@@ -97,14 +99,17 @@ ggplot(dat_subset_long |> filter(str_detect(var_name, 'urpi')), aes(x=delta_eot_
   scale_color_discrete(name = 'Group',
                        labels = c('1'='W-SUDS', '2'='Psychoed')) +
   theme_bw()
-ggsave(file.path(save_dir, 'urpi_sub-use-occ_scatter.png'))
+ggsave(file.path(save_dir, 'urpi_sub-use-occ_scatter.png'), width=5, height=5)
 
 
 waisr.labs <- c("WAI-SR Goals", "WAI-SR Tasks", "WAI-SR Bond")
 names(waisr.labs) <- c("eot_waisr_g", "eot_waisr_t", "eot_waisr_b")
-ggplot(dat_subset_long |> filter(str_detect(var_name, 'waisr'), group==1), aes(x=delta_eot_p30, y=value, color=group)) + 
+dat_subset_long_waisr <- dat_subset_long |> 
+  filter(str_detect(var_name, 'waisr'), group==1) |>
+  drop_na(value)
+ggplot(dat_subset_long_waisr, aes(x=delta_eot_p30, y=value, color=group)) + 
   geom_point() + 
-  geom_smooth(method="lm") +
+  geom_smooth(method="lm", formula='y~x') +
   facet_grid(cols=vars(var_name),
              rows=vars(group),
              labeller = labeller(var_name=waisr.labs,
@@ -114,4 +119,4 @@ ggplot(dat_subset_long |> filter(str_detect(var_name, 'waisr'), group==1), aes(x
   scale_color_discrete(name = 'Group',
                        labels = c('1'='W-SUDS', '2'='Psychoed')) +
   theme_bw()
-ggsave(file.path(save_dir, 'waisr_sub-use-occ_scatter.png'))
+ggsave(file.path(save_dir, 'waisr_sub-use-occ_scatter.png'), width=5, height=5)
