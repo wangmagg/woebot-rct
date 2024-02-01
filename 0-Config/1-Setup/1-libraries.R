@@ -1,0 +1,15 @@
+# Load libraries
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(readxl))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(conflicted))
+suppressPackageStartupMessages(library(MASS))
+suppressPackageStartupMessages(library(pbapply))
+suppressPackageStartupMessages(library(corrplot))
+suppressPackageStartupMessages(library(here))
+suppressPackageStartupMessages(library(ggpubr))
+
+conflict_prefer("filter", "dplyr", quiet=TRUE)
+conflict_prefer("select", "dplyr", quiet=TRUE)

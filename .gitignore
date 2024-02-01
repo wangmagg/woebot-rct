@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Rprofile
+
+renv
+*.Rproj
+*.DS_Store
+
+*-Output
+4-Sanity
