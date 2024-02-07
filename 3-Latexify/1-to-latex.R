@@ -102,7 +102,11 @@ make_timept_within_group_latex <- function(descrip_res, ttest_res=NULL, keep_var
 }
 
 # T4 & 6: Primary & Secondary Outcomes at Baseline, 4-weeks, 8-weeks, 12-weeks
-base_fname <- file.path(ANALYSIS_OUT_DIR, '1-Descriptives-Output', '2b-Outcome-Vars-Summary', 'baseline-retained_descriptive_summary.csv')
+base_fname <- file.path(ANALYSIS_OUT_DIR, 
+                        '1-Descriptives-Output', 
+                        '2b-Outcome-Vars-Summary', 
+                        'baseline',
+                        'baseline-retained_descriptive_summary.csv')
 if (file.exists(base_fname)) {
   base_descrip <- read.csv(base_fname)
   base_descrip_latex <- make_baseline_descrip_latex(base_descrip)
@@ -110,7 +114,10 @@ if (file.exists(base_fname)) {
 }
 
 for (timept in c('mid', 'eot', 'followup')) {
-  timept_dir <- file.path(ANALYSIS_OUT_DIR, '1-Descriptives-Output', '2b-Outcome-Vars-Summary', timept)
+  timept_dir <- file.path(ANALYSIS_OUT_DIR, 
+                          '1-Descriptives-Output', 
+                          '2b-Outcome-Vars-Summary', 
+                          timept)
   timept_fname <- str_c(timept, '-retained_descriptive_summary.csv')
   timept_path <- file.path(timept_dir, timept_fname)
   if (file.exists(timept_path)) {
@@ -140,7 +147,7 @@ for (timept in c('mid', 'eot', 'followup')) {
 }
 
 # T7: Estimated Secondary Outcome Treatment Effects at 4-weeks, 8-weeks, 12-weeks
-res_dir <- file.path(ANALYSIS_OUT_DIR, '2-Effects-Output', '2a-Between-Group-Secondary')
+res_dir <- file.path(ANALYSIS_OUT_DIR, '2-Effects-Output', '2b-Between-Group-Secondary')
 for (timept in c('mid', 'eot', 'followup')) {
   outcome_vars_timept <- OUTCOME_VARS_DICT[[timept]]
   secondary_outcome_vars_timept <- outcome_vars_timept[outcome_vars_timept != 'p30']

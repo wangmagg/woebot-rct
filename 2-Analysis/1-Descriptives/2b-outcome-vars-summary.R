@@ -124,35 +124,5 @@ for (timept in timepts) {
                               save_dir = file.path(save_dir, timept))
   }
 }
-
-# all_vars_cohens_d_avg <- data.frame()
-# for (timept_str in timepts) {
-#   all_delta_var_summaries_timept <- all_delta_var_summaries |> 
-#     filter(timept == timept_str)
-#   outcome_vars <- OUTCOME_VARS_DICT[[timept]]
-#   for (outcome_var in outcome_vars) {
-#     outcome_var_post <- str_c(timept, outcome_var, sep='_')
-#     sd_pre <- all_delta_var_summaries_timept |> 
-#       filter(var == outcome_var) |> 
-#       select(group, sd) |>
-#       rename(sd_pre = sd)
-#     sd_post <- all_delta_var_summaries_timept |>
-#       filter(var == outcome_var_post) |>
-#       select(group, sd) |>
-#       rename(sd_post = sd)
-#     mean_delta <- all_delta_var_summaries_timept |>
-#       filter(var == str_c('delta', outcome_var_post, sep='_')) |>
-#       select(group, mean)
-#     combined_stats <- sd_pre |> 
-#       inner_join(sd_post, by = 'group') |> 
-#       inner_join(mean_delta, by = 'group') 
-#     cohens_d_avg_df <- combined_stats |> 
-#       mutate(cohens_d_avg = mean / sqrt((sd_pre^2 + sd_post^2) / 2)) |>
-#       mutate(var = str_c('delta', outcome_var, sep='_')) |>
-#       select(group, var, cohens_d_avg) 
-#     all_vars_cohens_d_avg <- bind_rows(all_vars_cohens_d_avg, cohens_d_avg_df)
-#   }
-# }
-# write.csv(all_vars_cohens_d_avg, file.path(save_dir, 'cohens_d_avg.csv'), row.names=FALSE)
   
 

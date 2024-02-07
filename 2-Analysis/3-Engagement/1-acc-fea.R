@@ -9,7 +9,28 @@ if (!dir.exists(save_dir)) {
 
 # Read input data file
 dat_outcome_regression <- read.csv(file.path(DATA_OUT_DIR, 'dat_analysis_outcome-regression.csv'))
+dat_descriptive <- read.csv(file.path(DATA_OUT_DIR, 'dat_analysis_descriptive.csv'))
 
+# Get descriptive summaries
+dat_descriptive_retained <- dat_descriptive |> filter(retained_eot == 1)
+get_descriptive_summary(dat_descriptive_retained |> filter(group == 1),
+                        vars = c('eot_csq_grp1', str_c('eot_csq_grp1', 1:8, sep='_')),
+                        save_prefix = 'csq_grp1_eot-retained',
+                        save_dir = save_dir)
+get_descriptive_summary(dat_descriptive_retained |> filter(group == 2),
+                        vars = c('eot_csq_grp2', str_c('eot_csq_grp2', 1:8, sep='_')),
+                        save_prefix = 'csq_grp2_eot-retained',
+                        save_dir = save_dir)
+get_descriptive_summary(dat_descriptive_retained |> filter(group == 1),
+                        vars = c('eot_waisr_g', 'eot_waisr_t', 'eot_waisr_b'),
+                        save_prefix = 'eot_waisr_eot-retained',
+                        save_dir = save_dir)
+get_descriptive_summary(dat_descriptive_retained,
+                        vars = c('eot_urpi_a', 'eot_urpi_f'),
+                        save_prefix = 'eot_urpi_eot-retained',
+                        save_dir = save_dir)
+
+# Get correlations in treated group (W-SUDS)
 dat <- dat_outcome_regression |>
   filter(retained_eot == 1) |>
   mutate(eot_csq = 
@@ -20,7 +41,6 @@ dat <- dat_outcome_regression |>
   mutate_at(c("group"), ~relevel(.x, ref=2)) |>
   select(-eot_csq_grp1, -eot_csq_grp2)
 
-# Get correlations in treated group (W-SUDS)
 dat_grp1 <- dat |> filter(group == 1)
 grp1_vars <- c('eot_csq', 
                'eot_urpi_a', 'eot_urpi_f', 
