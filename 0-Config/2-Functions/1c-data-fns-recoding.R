@@ -80,6 +80,70 @@ set_therapy_status <- function(dat) {
                        .default = NA))
 }
 
+set_eot_csq <- function(dat) {
+  dat <- dat |>
+    mutate(eot_csq = 
+             case_when(
+               group == 1 ~ eot_csq_grp1,
+               group == 2 ~ eot_csq_grp2))
+}
+
+set_pst_p30 <- function(dat, timepts) {
+  dat <- dat |>
+    mutate(pst_p30_alc = case_when(psub_1 == 1 | psub_2 == 1 | psub_3 == 1 ~ p30_alc,
+                                  .default = 0),
+           pst_p30_can = case_when(psub_1 == 7 | psub_2 == 7 | psub_3 == 7 ~ p30_can,
+                                  .default = 0),
+           pst_p30_coc = case_when(psub_1 == 3 | psub_2 == 3 | psub_3 == 3 ~ p30_coc,
+                                  .default = 0),
+           pst_p30_sti_met = case_when(psub_1 == 10 | psub_2 == 10 | psub_3 == 10 ~ p30_sti + p30_met,
+                                      .default = 0),
+           pst_p30_inh = case_when(psub_1 == 6 | psub_2 == 6 | psub_3 == 6 ~ p30_inh,
+                                   .default = 0),
+           pst_p30_sed = case_when(psub_1 == 9 | psub_2 == 9 | psub_3 == 9 ~ p30_sed,
+                                  .default = 0),
+           pst_p30_hal = case_when(psub_1 == 4 | psub_2 == 4 | psub_3 == 4 ~ p30_hal,
+                                  .default = 0),
+           pst_p30_sop = case_when(psub_1 == 5 | psub_2 == 5 | psub_3 == 5 ~ p30_sop,
+                                  .default = 0),
+           pst_p30_pop = case_when(psub_1 == 8 | psub_2 == 8 | psub_3 == 8 ~ p30_pop,
+                                  .default = 0)) |>
+    mutate(pst_p30 = rowSums(pick(starts_with('pst_p30')), na.rm = TRUE))
+  
+  for (timept in timepts) {
+    dat <- dat |>
+      mutate(!!sym(str_c(timept, '_pst_p30_alc')) := 
+               case_when(psub_1 == 1 | psub_2 == 1 | psub_3 == 1 ~ !!sym(str_c(timept, '_p30_alc')),
+                         .default = 0),
+            !!sym(str_c(timept, '_pst_p30_can')) := 
+              case_when(psub_1 == 7 | psub_2 == 7 | psub_3 == 7 ~ !!sym(str_c(timept, '_p30_can')),
+                        .default = 0),
+            !!sym(str_c(timept, '_pst_p30_coc')) :=
+              case_when(psub_1 == 3 | psub_2 == 3 | psub_3 == 3 ~ !!sym(str_c(timept, '_p30_coc')),
+                        .default = 0),
+            !!sym(str_c(timept, '_pst_p30_sti_met')) :=
+              case_when(psub_1 == 10 | psub_2 == 10 | psub_3 == 10 ~ !!sym(str_c(timept, '_p30_sti')) + !!sym(str_c(timept, '_p30_met')),
+                        .default = 0),
+            !!sym(str_c(timept, '_pst_p30_inh')) :=
+              case_when(psub_1 == 6 | psub_2 == 6 | psub_3 == 6 ~ !!sym(str_c(timept, '_p30_inh')),
+                        .default = 0),
+            !!sym(str_c(timept, '_pst_p30_sed')) :=
+              case_when(psub_1 == 9 | psub_2 == 9 | psub_3 == 9 ~ !!sym(str_c(timept, '_p30_sed')),
+                        .default = 0),
+            !!sym(str_c(timept, '_pst_p30_hal')) :=
+              case_when(psub_1 == 4 | psub_2 == 4 | psub_3 == 4 ~ !!sym(str_c(timept, '_p30_hal')),
+                        .default = 0),
+            !!sym(str_c(timept, '_pst_p30_sop')) :=
+              case_when(psub_1 == 5 | psub_2 == 5 | psub_3 == 5 ~ !!sym(str_c(timept, '_p30_sop')),
+                        .default = 0),
+            !!sym(str_c(timept, '_pst_p30_pop')) :=
+              case_when(psub_1 == 8 | psub_2 == 8 | psub_3 == 8 ~ !!sym(str_c(timept, '_p30_pop')),
+                        .default = 0)) |>
+      mutate(!!sym(str_c(timept, '_pst_p30')) := rowSums(pick(starts_with(str_c(timept, '_pst_p30'))), na.rm = TRUE))
+  }
+  return(dat)
+}
+
 set_factors <- function(dat, vars, add_na=TRUE, ordered=FALSE) {
   dat <- dat |>
     mutate(across(all_of(vars), ~factor(.x, ordered=ordered)))
@@ -128,6 +192,10 @@ collapse_multi <- function(dat) {
         educ == 5 ~ 'college',
         educ == 6 ~ 'grad',
         .default = 'other'
+      ),
+      disab = case_when(
+        disab == 1 ~ 'yes',
+        disab == 0 | disab == 99 ~ 'no_pna'
       )
     ) |>
     select(-starts_with('race_'), -starts_with('trt_'), -starts_with('mh_'))

@@ -40,14 +40,17 @@ for (timept in timepts) {
                                                             retain_var = retain_var, 
                                                             outcome_var = delta_outcome_var_for_fit,
                                                             save_dir = file.path(save_dir, timept))
-
-    res <- run_lm(dat_outcome_to_fit, fixed_effect_vars_selected, retain_var, delta_outcome_var_for_fit)
-
-    mdl_lm <- res$mdl
+    
+    dat_outcome_to_fit <- dat_outcome_to_fit |>
+      select(all_of(fixed_effect_vars_selected), !!sym(delta_outcome_var_for_fit)) |>
+      mutate(across(c(where(is.numeric), -!!sym(delta_outcome_var_for_fit)), scale)) |>
+      select(where(~n_distinct(.) > 1))
+    
+    formula <- as.formula(paste0(delta_outcome_var_for_fit, " ~ ."))
+    mdl_lm <- lm(formula, data = dat_outcome_to_fit)
     mdl_lm_df <- data.frame('y_hat' = mdl_lm$fitted.values,
                             'residuals' = mdl_lm$residuals)
     vars_df <- dat_outcome_to_fit |>
-      filter(!!sym(retain_var) == 1) |>
       select(all_of(fixed_effect_vars_selected))
     mdl_lm_df <- bind_cols(mdl_lm_df, vars_df)
     

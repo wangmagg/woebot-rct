@@ -3,7 +3,7 @@ fit_retention_weights_lm <- function(dat, retain_var, outcome_var) {
   
   dat_to_fit <- dat |>
     select(-participant_id, -!!sym(outcome_var)) |>
-    select(where(~n_distinct(.) > 1)) |>
+    select(where(~n_distinct(.) > 1), retain_var) |>
     mutate_if(is.numeric, scale)
     
   y <- dat |>
@@ -29,7 +29,10 @@ fit_retention_weights_lm <- function(dat, retain_var, outcome_var) {
     distinct(participant_id, .keep_all=TRUE)
 }
 
-run_lm <- function(dat, fixed_effect_vars, retain_var, outcome_var) {
+
+run_lm <- function(dat, boot_idx, fixed_effect_vars, retain_var, outcome_var) {
+  dat <- dat[boot_idx, ]
+  
   dat <- dat |>
     filter(!!sym(retain_var) == 1) |>
     select(all_of(fixed_effect_vars), !!sym(outcome_var)) |>
@@ -37,79 +40,19 @@ run_lm <- function(dat, fixed_effect_vars, retain_var, outcome_var) {
     select(where(~n_distinct(.) > 1))
   
   formula <- as.formula(paste0(outcome_var, " ~ ."))
-  
   linreg_mdl <- lm(formula, data = dat)
+  beta <- coef(linreg_mdl)['group1']
   
   delta_use_hat_trt <- linreg_mdl$fitted.values[dat$group == 1]
   delta_use_hat_ctrl <- linreg_mdl$fitted.values[dat$group == 2]
+  dim <- mean(delta_use_hat_trt) - mean(delta_use_hat_ctrl)
   
-  # X_trt <- dat |> filter(group == 1)
-  # X_ctrl <- dat |> filter(group == 2)
-  # 
-  # warning_pred_trt <- FALSE
-  # delta_use_hat_trt <- withCallingHandlers(
-  #   predict(linreg_mdl, X_trt),
-  #   warning = function(w) {
-  #     warning_pred_trt <<- TRUE
-  #   }
-  # )
-  # 
-  # warning_pred_ctrl <- FALSE
-  # delta_use_hat_ctrl <- withCallingHandlers(
-  #   predict(linreg_mdl, X_ctrl),
-  #   warning = function(w) {
-  #     warning_pred_ctrl <<- TRUE
-  #   }
-  # )
-
-  ate <- mean(delta_use_hat_trt) - mean(delta_use_hat_ctrl)
-  beta <- coef(linreg_mdl)['group1']
-  
-  list('mdl' = linreg_mdl,
-       'ate' = ate, 
-       'beta' = beta)
+  c(beta, dim)
 }
 
-bootstrap_run <- function(dat, fixed_effect_vars, retain_var, outcome_var, n_iters, seed=42) {
-  set.seed(seed)
+run_weighted_lm <- function(dat, boot_idx, fixed_effect_vars, retain_var, outcome_var, weight_vars) {
+  dat <- dat[boot_idx, ]
   
-  obs <- run_lm(dat, fixed_effect_vars, retain_var, outcome_var)
-  bs_res <- pbsapply(1:n_iters,
-                     function(i) {
-                       dat_iter <- dat |> 
-                         slice_sample(prop=1, by=c(group, retain_var), replace=TRUE)
-                       bs_iter <- run_lm(dat_iter, fixed_effect_vars, retain_var, outcome_var)
-                     }, simplify=FALSE)
-  bs_res <- as.data.frame(do.call(rbind, bs_res))
-  
-  pooled_mean <- dat |>
-    pull(!!sym(outcome_var)) |>
-    mean()
-  dat_h0 <- dat |>
-    group_by(group) |>
-    mutate(across({{outcome_var}}, function(.x) {.x - mean(.x) + pooled_mean})) |>
-    ungroup()
-  
-  bs_res_h0 <- pbsapply(1:n_iters,
-                        function(i) {
-                          dat_h0_iter <- dat_h0 |> 
-                            slice_sample(prop=1, by=c(group, retain_var), replace=TRUE)
-                          ate_bs_h0_iter <- run_lm(dat_h0_iter, fixed_effect_vars, retain_var, outcome_var)
-                        }, simplify=FALSE)
-  bs_res_h0 <- as.data.frame(do.call(rbind, bs_res_h0))
-  
-  list('ate' = obs$ate,
-       'ate_q025' = quantile(unlist(bs_res$ate), 0.025),
-       'ate_q975' = quantile(unlist(bs_res$ate), 0.975),
-       'ate_pval' = (1 + sum(abs(unlist(bs_res_h0$ate)) >= abs(obs$ate))) / (n_iters + 1),
-       'beta' = obs$beta,
-       'beta_q025' = quantile(unlist(bs_res$beta),0.025),
-       'beta_q975' = quantile(unlist(bs_res$beta),0.975),
-       'beta_pval' = (1 + sum(abs(unlist(bs_res_h0$beta)) >= abs(obs$beta))) / (n_iters + 1),
-       'n_warnings' = sum(unlist(bs_res$warning)))
-}
-
-run_weighted_lm <- function(dat, fixed_effect_vars, retain_var, outcome_var, weight_vars) {
   dat_for_weights <- dat |>
     select(all_of(weight_vars), !!sym(retain_var), !!sym(outcome_var), participant_id)
   weights <- fit_retention_weights_lm(dat_for_weights, retain_var, outcome_var)
@@ -127,93 +70,65 @@ run_weighted_lm <- function(dat, fixed_effect_vars, retain_var, outcome_var, wei
   formula <- as.formula(paste0(outcome_var, " ~ . - weight"))
   
   weighted_linreg_mdl <- lm(formula, data = dat_for_reg_weighted, weights=dat_for_reg_weighted$weight)
-  
-  dat_for_reg_weighted_trt <- dat_for_reg_weighted |>
-    filter(group == 1)
-  dat_for_reg_weighted_ctrl <- dat_for_reg_weighted |>
-    filter(group == 2)
-  
-  warning_pred_trt <- FALSE
-  weighted_delta_use_hat_trt <- withCallingHandlers(
-    predict(weighted_linreg_mdl, 
-            newdata = dat_for_reg_weighted_trt, 
-            weights = dat_for_reg_weighted_trt$weight),
-    warning = function(w) warning_pred_trt <<- TRUE
-  )
-     
-  warning_pred_ctrl <- FALSE
-  weighted_delta_use_hat_ctrl <- withCallingHandlers(
-    predict(weighted_linreg_mdl, 
-            newdata = dat_for_reg_weighted_ctrl, 
-            weights = dat_for_reg_weighted_ctrl$weight),
-    warning = function(w) warning_pred_ctrl <<- TRUE
-  )
-  
-  weighted_ate <- mean(weighted_delta_use_hat_trt) - mean(weighted_delta_use_hat_ctrl)
   weighted_beta <- coef(weighted_linreg_mdl)['group1']
   
-  list('mdl' = weighted_linreg_mdl,
-       'ate' = weighted_ate, 
-       'beta' = weighted_beta, 
-       'warning' = warning_pred_trt + warning_pred_ctrl)
+  dat_for_reg_weighted_trt <- dat_for_reg_weighted |> filter(group == 1)
+  dat_for_reg_weighted_ctrl <- dat_for_reg_weighted |> filter(group == 2)
+  
+  weighted_delta_use_hat_trt <- predict(weighted_linreg_mdl,
+                                        newdata = dat_for_reg_weighted_trt,
+                                        weights = dat_for_reg_weighted_trt$weight)
+  
+  weighted_delta_use_hat_ctrl <- predict(weighted_linreg_mdl,
+                                         newdata = dat_for_reg_weighted_ctrl,
+                                         weights = dat_for_reg_weighted_ctrl$weight)
+  
+  weighted_dim <- mean(weighted_delta_use_hat_trt) - mean(weighted_delta_use_hat_ctrl)
+  
+  c(weighted_beta, weighted_dim)
 }
 
-bootstrap_run_weighted <- function(dat, fixed_effect_vars, retain_var, outcome_var, weight_vars, n_iters, seed=42) {
+bootstrap_run <- function(lm_fn, dat, fixed_effect_vars, retain_var, outcome_var, n_iters, seed=42, weight_vars=NULL) {
   set.seed(seed)
   
-  obs <- run_weighted_lm(dat, fixed_effect_vars, retain_var, outcome_var, weight_vars)
-  bs_res <- pbsapply(1:n_iters,
-                     function(i) {
-                       dat_bs_iter <- dat |>
-                         group_by(group, !!sym(retain_var)) |>
-                         slice_sample(prop=1, replace=TRUE) |>
-                         ungroup()
-                       bs_iter <- run_weighted_lm(dat_bs_iter, fixed_effect_vars, retain_var, outcome_var, weight_vars)
-                     }, simplify=FALSE)
-  bs_res <- as.data.frame(do.call(rbind, bs_res))
+  if (!is.null(weight_vars)) {
+    stat_boot <- boot(data=dat, statistic=lm_fn, R=n_iters, 
+                      fixed_effect_vars=fixed_effect_vars, retain_var=retain_var, outcome_var=outcome_var, weight_vars=weight_vars)
+  } else {
+    stat_boot <- boot(data=dat, statistic=lm_fn, R=n_iters, 
+                      fixed_effect_vars=fixed_effect_vars, retain_var=retain_var, outcome_var=outcome_var)
+  }
   
-  pooled_mean <- dat |>
-    pull(!!sym(outcome_var)) |>
-    mean()
-  dat_h0 <- dat |>
-    group_by(group) |>
-    mutate(across({{outcome_var}}, function(.x) {.x - mean(.x) + pooled_mean})) |>
-    ungroup()
-  
-  bs_res_h0 <- pbsapply(1:n_iters,
-                        function(i) {
-                          dat_h0_iter <- dat_h0 |> 
-                            group_by(group, !!sym(retain_var)) |>
-                            slice_sample(prop=1, replace=TRUE) |>
-                            ungroup()
-                          bs_h0_iter <- run_weighted_lm(dat_h0_iter, fixed_effect_vars, retain_var, outcome_var, weight_vars)
-                        }, simplify=FALSE)
-  bs_res_h0 <- as.data.frame(do.call(rbind, bs_res_h0))
-  
-  list('ate' = obs$ate,
-       'ate_q025' = quantile(unlist(bs_res$ate), 0.025),
-       'ate_q975' = quantile(unlist(bs_res$ate), 0.975),
-       'ate_pval' = (1 + sum(abs(unlist(bs_res_h0$ate)) >= abs(obs$ate))) / (n_iters + 1),
-       'beta' = obs$beta,
-       'beta_q025' = quantile(unlist(bs_res$beta),0.025, na.rm=TRUE),
-       'beta_q975' = quantile(unlist(bs_res$beta),0.975, na.rm=TRUE),
-       'beta_pval' = (1 + sum(abs(unlist(bs_res_h0$beta)) >= abs(obs$beta), na.rm=TRUE)) / (n_iters + 1),
-       'n_warnings' = sum(unlist(bs_res$warning)))
+  ci_beta <- boot.ci(stat_boot, conf=0.95, type='bca', index=1)
+  ci_dim <- boot.ci(stat_boot, conf=0.95, type='bca', index=2)
+
+  list('beta' = stat_boot$t0[1],
+       'beta_q025' = ci_beta$bca[4],
+       'beta_q975' = ci_beta$bca[5],
+       'dim' = stat_boot$t0[2],
+       'dim_q025' = ci_dim$bca[4],
+       'dim_q975' = ci_dim$bca[5])
 }
 
-run_intxn_lm <- function(dat, fixed_effect_vars, retain_var, outcome_var) {
-  dat <- dat |>
-    filter(!!sym(retain_var) == 1) |>
-    select(all_of(fixed_effect_vars), !!sym(outcome_var), subgroup, participant_id) |>
-    mutate(across(c(where(is.numeric), -!!sym(outcome_var), -participant_id), scale)) |>
-    select(where(~n_distinct(.) > 1))
-  
-  formula <- as.formula(paste0(outcome_var, " ~ . + subgroup + subgroup:group"))
-  linreg_mdl <- lm(formula, data = dat)
-  
-  pred <- predict(linreg_mdl)
+permutation_test <- function(stat_obs, lm_fn, dat, fixed_effect_vars, retain_var, outcome_var, n_iters, seed=42, ...) {
+  set.seed(seed)
 
-  ates <- dat |> 
+  stat_shuff <- pbsapply(1:n_iters,
+                       function(i) {
+                         dat <- dat |>
+                           mutate(group = sample(group, n(), replace=FALSE))
+                         stat_iter <- lm_fn(dat, 1:nrow(dat), fixed_effect_vars, retain_var, outcome_var, ...)
+                       })
+  
+  pval <- rowMeans(abs(unlist(stat_shuff)) >= abs(unlist(stat_obs)))
+  list('beta_pval' = pval[1],
+       'dim_pval' = pval[2])
+}
+
+.get_dim_from_subgroup_mdl <- function(dat, linreg_mdl, ...) {
+  pred <- predict(linreg_mdl, ...)
+  
+  dat |> 
     mutate(pred = pred) |>
     select(group, subgroup, pred) |>
     pivot_wider(names_from=group, 
@@ -224,7 +139,42 @@ run_intxn_lm <- function(dat, fixed_effect_vars, retain_var, outcome_var) {
     select(subgroup, ate)
 }
 
-run_intxn_weighted_lm <- function(dat, fixed_effect_vars, retain_var, outcome_var, weight_vars) {
+.get_beta_from_subgroup_mdl <- function(dat, linreg_mdl) {
+  subgroup_lvls <- replace_na(levels(dat$subgroup), 'NA')
+  
+  subgroup_nonref_lvls <- subgroup_lvls[2:length(subgroup_lvls)]
+  subgroup_nonref_names <- str_c('subgroup', subgroup_nonref_lvls)
+  group_subgroup_intxn_names <- str_c('group1', subgroup_nonref_names, sep=':')
+  
+  betas <- coef(linreg_mdl)[c('group1', group_subgroup_intxn_names)]
+  beta_intxns <- c(NA, betas[2:length(betas)])
+  betas[2:length(betas)] <- betas[2:length(betas)] + betas[1]
+  
+  c(betas, beta_intxns)
+}
+
+run_intxn_lm <- function(dat, boot_idx, fixed_effect_vars, retain_var, outcome_var, ret_type='beta') {
+  dat <- dat[boot_idx, ]
+  
+  dat <- dat |>
+    filter(!!sym(retain_var) == 1) |>
+    select(all_of(fixed_effect_vars), !!sym(outcome_var), subgroup, participant_id) |>
+    mutate(across(c(where(is.numeric), -!!sym(outcome_var), -participant_id), scale)) |>
+    select(where(~n_distinct(.) > 1))
+  
+  formula <- as.formula(paste0(outcome_var, " ~ . + group + subgroup + subgroup:group"))
+  linreg_mdl <- lm(formula, data = dat)
+
+  if (ret_type == 'beta') {
+    .get_beta_from_subgroup_mdl(dat, linreg_mdl)
+  } else if (ret_type == 'dim') {
+    .get_dim_from_subgroup_mdl(dat, linreg_mdl)
+  }
+}
+
+run_intxn_weighted_lm <- function(dat, boot_idx, fixed_effect_vars, retain_var, outcome_var, weight_vars, ret_type='beta') {
+  dat <- dat[boot_idx, ]
+  
   dat_for_weights <- dat |>
     select(all_of(weight_vars), !!sym(retain_var), !!sym(outcome_var), subgroup, participant_id)
   weights <- fit_retention_weights_lm(dat_for_weights, retain_var, outcome_var)
@@ -237,73 +187,92 @@ run_intxn_weighted_lm <- function(dat, fixed_effect_vars, retain_var, outcome_va
     left_join(weights, by=c('participant_id')) |>
     select(-participant_id) |>
     mutate(across(c(where(is.numeric), -!!sym(outcome_var), -weight), scale)) |>
-    select(where(~n_distinct(.) > 1))
+    select(where(~n_distinct(.) > 1), weight)
   
-  formula <- as.formula(paste0(outcome_var, " ~ . - weight + subgroup + subgroup:group"))
+  formula <- as.formula(paste0(outcome_var, " ~ . - weight + group + subgroup + subgroup:group"))
   linreg_mdl <- lm(formula, data=dat_for_reg_weighted, weights=dat_for_reg_weighted$weight)
   
-  ates <- dat_for_reg_weighted |>
-    mutate(pred = predict(linreg_mdl, weights=weight)) |>
-    select(group, subgroup, pred) |>
-    pivot_wider(names_from=group, 
-                values_from=pred,
-                names_prefix='mean_pred_grp_',
-                values_fn=mean) |>
-    mutate(ate = mean_pred_grp_1 - mean_pred_grp_2) |>
-    select(subgroup, ate)
-  
-  return (ates)
+  if (ret_type == 'beta') {
+    .get_beta_from_subgroup_mdl(dat, linreg_mdl)
+  } else if (ret_type == 'dim') {
+    .get_dim_from_subgroup_mdl(dat, linreg_mdl)
+  }
 }
 
-bootstrap_run_intxn <- function(dat, fixed_effect_vars, retain_var, outcome_var, n_iters, seed=42) {
+bootstrap_run_intxn <- function(lm_fn, dat, fixed_effect_vars, retain_var, outcome_var, n_iters, seed=42, weight_vars=NULL) {
   set.seed(seed)
   
-  ate_obs <-  run_intxn_lm(dat, fixed_effect_vars, retain_var, outcome_var)
+  if (!is.null(weight_vars)) {
+    stat_boot <- boot(data=dat, statistic=lm_fn, R=n_iters, 
+                      fixed_effect_vars=fixed_effect_vars, retain_var=retain_var, outcome_var=outcome_var, weight_vars=weight_vars)
+  } else {
+    stat_boot <- boot(data=dat, statistic=lm_fn, R=n_iters, 
+                      fixed_effect_vars=fixed_effect_vars, retain_var=retain_var, outcome_var=outcome_var)
+  }
   
-  ate_bs <- pbsapply(1:n_iters,
-                     function(i) {
-                       dat_bs_iter <- dat |>
-                         group_by(group, subgroup) |>
-                         slice_sample(prop=1, replace=TRUE) |>
-                         ungroup()
-                       ate_bs_iter <- run_intxn_lm(dat_bs_iter, fixed_effect_vars, retain_var, outcome_var) |>
-                         mutate(iter = i)
-                     }, simplify=FALSE)
-  ate_bs <- do.call(bind_rows, ate_bs)
+  subgroup_lvls <- replace_na(levels(dat$subgroup), 'NA')
+  n_subgroup_lvls <- length(subgroup_lvls)
   
-  res <- ate_bs |>
-    group_by(subgroup) |>
-    summarize(ate_q025 = quantile(ate, 0.025),
-              ate_q975 = quantile(ate, 0.975)) |>
-    ungroup()
+  beta <- data.frame(subgroup = subgroup_lvls,
+                     beta = stat_boot$t0[1:n_subgroup_lvls])
+  beta_intxn <- data.frame(subgroup = subgroup_lvls,
+                           beta_intxn = stat_boot$t0[(n_subgroup_lvls + 1): length(stat_boot$t0)])
   
-  res <- ate_obs |> inner_join(res, by='subgroup') 
+  all_beta_ci <- data.frame()
+  all_beta_intxn_ci <- data.frame()
+  for (i in 1:n_subgroup_lvls) {
+    ci <- boot.ci(stat_boot, conf=0.95, type='bca', index=i)
+    ci <- list(subgroup = subgroup_lvls[i],
+               beta_q025 = ci$bca[4],
+               beta_q975 = ci$bca[5])
+    all_beta_ci <- bind_rows(all_beta_ci, ci)
+    
+    intxn_idx <- i + n_subgroup_lvls
+    if (is.na(stat_boot$t0[intxn_idx])) {
+      intxn_ci <- list(subgroup = subgroup_lvls[i],
+                       beta_intxn_q025 = NA,
+                       beta_intxn_q975 = NA)
+    } else {
+      intxn_ci <- boot.ci(stat_boot, conf=0.95, type='bca', index=intxn_idx)
+      intxn_ci <- list(subgroup = subgroup_lvls[i],
+                       beta_intxn_q025 = intxn_ci$bca[4],
+                       beta_intxn_q975 = intxn_ci$bca[5])
+    }
+    all_beta_intxn_ci <- bind_rows(all_beta_intxn_ci, intxn_ci)
+  }
+  
+  beta |> 
+    left_join(all_beta_ci, by='subgroup') |>
+    left_join(beta_intxn, by='subgroup') |>
+    left_join(all_beta_intxn_ci, by='subgroup')
 }
 
-bootstrap_run_intxn_weighted <- function(dat, fixed_effect_vars, retain_var, outcome_var, weight_vars, n_iters, seed=42) {
+permutation_test_subgroup <- function(stat_obs, lm_fn, dat, fixed_effect_vars, retain_var, outcome_var, n_iters, seed=42, ...) {
   set.seed(seed)
+
+  res_shuff <- pbsapply(1:n_iters,
+                        function(i) {
+                          dat <- dat |>
+                            group_by(subgroup) |>
+                            mutate(group = sample(group, size=n(), replace=FALSE)) |>
+                            ungroup()
+                          res_iter <- lm_fn(dat, 1:nrow(dat), fixed_effect_vars, retain_var, outcome_var, ...)
+                        })
   
-  ate_obs <- run_intxn_weighted_lm(dat, fixed_effect_vars, retain_var, outcome_var, weight_vars)
+  subgroup_lvls <- replace_na(levels(dat$subgroup), 'NA')
+  n_subgroup_lvls <- length(subgroup_lvls)
   
-  ate_bs <- pbsapply(1:n_iters,
-                     function(i) {
-                       dat_bs_iter <- dat |>
-                         group_by(group, subgroup) |>
-                         slice_sample(prop=1, replace=TRUE) |>
-                         ungroup()
-                       ate_bs_iter <- run_intxn_weighted_lm(dat_bs_iter, fixed_effect_vars, retain_var, outcome_var, weight_vars) |>
-                         mutate(iter = i)
-                     }, simplify=FALSE)
-  ate_bs <- do.call(bind_rows, ate_bs)
+  beta_shuff <- res_shuff[1:n_subgroup_lvls, ]
+  beta_obs <- stat_obs |> pull(beta)
+  beta_intxn_shuff <- res_shuff[(n_subgroup_lvls + 1): (2*n_subgroup_lvls), ]
+  beta_intxn_obs <- stat_obs |> pull(beta_intxn)
   
-  res <- ate_bs |>
-    group_by(subgroup) |>
-    summarize(ate_q025 = quantile(ate, 0.025),
-              ate_q975 = quantile(ate, 0.975)) |>
-    ungroup()
+  beta_pvals <- rowMeans(abs(beta_shuff) >= abs(beta_obs))
+  beta_intxn_pvals <- rowMeans(abs(beta_intxn_shuff) >= abs(beta_intxn_obs))
   
-  res <- ate_obs |>
-    inner_join(res, by='subgroup') 
+  data.frame(subgroup = subgroup_lvls,
+             beta_pval = beta_pvals,
+             beta_intxn_pval = beta_intxn_pvals)
 }
 
 run_regressions <- function(dat, 
@@ -314,33 +283,47 @@ run_regressions <- function(dat,
                             retain_var, 
                             bootstrap_reps, 
                             save_dir,
-                            overwrite = FALSE) {
+                            overwrite = FALSE,
+                            seed = 42) {
   
   # fit linear model with all data (bootstrapped)
   save_fname <- sprintf("res_%s_%s.csv", outcome_var, paste(methods, collapse='-'))
   
   if (!overwrite & file.exists(file.path(save_dir, save_fname))) {
     print(sprintf("Results file %s already exists, skipping...", save_fname))
-    return (NULL)
+    res <- read.csv(file.path(save_dir, save_fname))
+    return (res)
   }
   
   res <- data.frame()
   
   if ('ols' %in% methods) {
     print("Fitting linear model with all data...")
-    ols_res <- bootstrap_run(dat, fixed_effect_vars, retain_var, outcome_var, bootstrap_reps)
+    ols_res <- bootstrap_run(run_lm, dat, fixed_effect_vars, retain_var, outcome_var, bootstrap_reps, seed)
+    ols_pval <- permutation_test(ols_res[c('beta', 'dim')], run_lm, dat, 
+                                 fixed_effect_vars, retain_var, outcome_var, 
+                                 bootstrap_reps, seed)
+    ols_res <- bind_cols(ols_res, ols_pval)
     ols_res$method <- 'ols'
     res <- bind_rows(res, ols_res)
   }
  
   if ('weighted_ols' %in% methods) {
     print("Fitting weighted linear model with all data...")
-    weighted_ols_res <- bootstrap_run_weighted(dat, fixed_effect_vars, retain_var, outcome_var, weight_vars, bootstrap_reps)
+    weighted_ols_res <- bootstrap_run(run_weighted_lm, dat, 
+                                      fixed_effect_vars, retain_var, outcome_var, 
+                                      bootstrap_reps, seed, weight_vars)
+    weighted_ols_pval <- permutation_test(weighted_ols_res[c('beta', 'dim')], run_weighted_lm, dat, 
+                                          fixed_effect_vars, retain_var, outcome_var, 
+                                          bootstrap_reps, seed, weight_vars)
+    weighted_ols_res <- bind_cols(weighted_ols_res, weighted_ols_pval)
     weighted_ols_res$method <- 'weighted_ols'
     res <- bind_rows(res, weighted_ols_res)
   }
   
   write.csv(res, file.path(save_dir, save_fname), row.names=FALSE)
+  
+  return(res)
 }
 
 run_single_subgroup_regressions <- function(dat, 
@@ -352,7 +335,8 @@ run_single_subgroup_regressions <- function(dat,
                                             retain_var, 
                                             bootstrap_reps,
                                             save_dir,
-                                            overwrite) {
+                                            overwrite = FALSE,
+                                            seed = 42) {
   
   save_fname <- sprintf("subgroups_res_%s_%s_%s.csv", subgroup_var, outcome_var, paste(methods, collapse='-'))
   
@@ -364,8 +348,6 @@ run_single_subgroup_regressions <- function(dat,
   
   # Revert DAST scores for subgroup regression
   if (subgroup_var == 'dast') {
-    # dat <- dat |>
-    #   revert_dast(c('dast'))
     dat <- dat |>
       select(-dast) |>
       set_composite_sums(c('dast')) 
@@ -373,7 +355,8 @@ run_single_subgroup_regressions <- function(dat,
   
   # Get subgroup data
   get_subgroups <- get_subgrouping_fn(subgroup_var)
-  subgroups <- get_subgroups(dat)
+  subgroups <- get_subgroups(dat) |>
+    filter(!is.na(subgroup))
   dat_sg <- dat |>
     inner_join(subgroups, by=c('participant_id'))
   
@@ -382,18 +365,31 @@ run_single_subgroup_regressions <- function(dat,
   
   if ('ols' %in% methods) {
     print("Fitting linear model with all data...")
-    ols_res <- bootstrap_run_intxn(dat_sg, fixed_effect_vars, retain_var, outcome_var, bootstrap_reps)
+    ols_res <- bootstrap_run_intxn(run_intxn_lm, dat_sg, 
+                                   fixed_effect_vars, retain_var, outcome_var, 
+                                   bootstrap_reps, seed) 
+    ols_pval <- permutation_test_subgroup(ols_res, run_intxn_lm, dat_sg,
+                                          fixed_effect_vars, retain_var, outcome_var, 
+                                          bootstrap_reps, seed)
     ols_res <- ols_res |>
+      left_join(ols_pval, by='subgroup') |>
       mutate(method = 'ols')
-    res <- bind_rows(res, ols_res)
+
+    res <- bind_rows(res, ols_res) 
   }
   
   if ('weighted_ols' %in% methods) {
     print("Fitting weighted linear model with all data...")
-    weighted_ols_res <- bootstrap_run_intxn_weighted(dat_sg, fixed_effect_vars, retain_var, outcome_var, weight_vars,
-                                                     bootstrap_reps)
+    weighted_ols_res <- bootstrap_run_intxn(run_intxn_weighted_lm, dat_sg, 
+                                            fixed_effect_vars, retain_var, outcome_var,
+                                            bootstrap_reps, seed, weight_vars)
+    weighted_ols_pval <- permutation_test_subgroup(weighted_ols_res, run_intxn_weighted_lm, dat_sg,
+                                                   fixed_effect_vars, retain_var, outcome_var, 
+                                                   bootstrap_reps, seed, weight_vars)
     weighted_ols_res <- weighted_ols_res |>
+      left_join(weighted_ols_pval, by='subgroup') |>
       mutate(method = 'weighted_ols')
+    
     res <- bind_rows(res, weighted_ols_res)
   }
   
@@ -413,7 +409,8 @@ run_subgroup_regressions <- function(dat,
                                      bootstrap_reps,
                                      save_dir, 
                                      overwrite_combined,
-                                     overwrite_single) {
+                                     overwrite_single,
+                                     seed = 42) {
   
   save_fname <- sprintf("subgroups_res_%s_%s.csv", outcome_var, paste(methods, collapse='-'))
   
@@ -434,7 +431,8 @@ run_subgroup_regressions <- function(dat,
                                                     retain_var,
                                                     bootstrap_reps,
                                                     save_dir,
-                                                    overwrite_single)
+                                                    overwrite_single,
+                                                    seed)
     subgroup_res <- subgroup_res |>
       mutate(subgroup_var = subgroup_var) |>
       mutate_at(vars(subgroup), as.character) |>
@@ -442,5 +440,10 @@ run_subgroup_regressions <- function(dat,
     
     subgroup_res_combined <- bind_rows(subgroup_res_combined, subgroup_res)
   }
+  subgroup_res_combined$beta_adj_pval <- p.adjust(subgroup_res_combined$beta_pval, method='BH')
+  subgroup_res_combined$beta_intxn_adj_pval <- p.adjust(subgroup_res_combined$beta_intxn_pval, method='BH')
+  
   write.csv(subgroup_res_combined, file.path(save_dir, save_fname), row.names=FALSE)
+  
+  return (subgroup_res_combined)
 }

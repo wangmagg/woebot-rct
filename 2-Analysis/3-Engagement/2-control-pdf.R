@@ -8,20 +8,10 @@ if (!dir.exists(save_dir)) {
 }
 
 # Read input data files
-dat_pdf <- read_csv(rcc_pdf_path, show_col_types=FALSE)
 dat_rand_ret_base <- read_csv(file.path(DATA_OUT_DIR, 'dat_analysis_rand-ret-base.csv'), show_col_types=FALSE)
 
 # summarize weekly engagement in control group
-dat_pdf_summary <- dat_pdf |> 
-  group_by(participant_id) |>
-  summarize(w1_complete = sum(`Group 2 Info_complete` == 2, na.rm=TRUE),
-            w2_complete = sum(`Week 2 PDF_complete` == 2, na.rm=TRUE),
-            w3_complete = sum(`Week 3 PDF_complete` == 2, na.rm=TRUE),
-            w4_complete = sum(`Week 4 PDF_complete` == 2, na.rm=TRUE),
-            w5_complete = sum(`Week 5 PDF_complete` == 2, na.rm=TRUE),
-            w6_complete = sum(`Week 6 PDF_complete` == 2, na.rm=TRUE),
-            w7_complete = sum(`Week 7 PDF_complete` == 2, na.rm=TRUE),
-            w8_complete = sum(`Week 8 PDF_complete` == 2, na.rm=TRUE), .groups='drop') |>
+dat_pdf_summary <- dat_rand_ret_base |> 
   mutate(actual = rowSums(across(w1_complete:w8_complete), na.rm=TRUE)) |>
   select(participant_id, actual)
 

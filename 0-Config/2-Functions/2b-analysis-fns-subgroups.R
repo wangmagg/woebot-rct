@@ -1,15 +1,15 @@
 get_cageaid_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, cageaid) |>
-    mutate(subgroup = as.factor(cageaid)) |>
+    mutate(subgroup = factor(cageaid, ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_ther_status_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, ther_status) |>
-    mutate(subgroup = as.factor(ther_status)) |>
-    mutate(subgroup = addNA(subgroup)) |>
+    mutate(subgroup = factor(ther_status, ordered=FALSE)) |>
+    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
@@ -17,64 +17,64 @@ get_age_subgroups <- function(dat) {
   med_age <- median(dat$age, na.rm=TRUE)
   subgroups <- dat |>
     select(participant_id, age) |>
-    mutate(subgroup = as.factor(as.numeric(age >= med_age))) |>
+    mutate(subgroup = factor(as.numeric(age >= med_age), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_tobac_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, p30_tob) |>
-    mutate(subgroup = as.factor(p30_tob != 0)) |>
+    mutate(subgroup = factor(p30_tob != 0, ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_empl_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, empl) |>
-    mutate(subgroup = as.factor(empl)) |>
+    mutate(subgroup = factor(empl, ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_educ_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, educ) |>
-    mutate(subgroup = as.factor(as.numeric(educ != 'hs'))) |> 
+    mutate(subgroup = factor(as.numeric(educ != 'hs'), ordered=FALSE)) |> 
     select(participant_id, subgroup)
 }
 
 get_insur_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, insur) |>
-    mutate(subgroup = as.factor(as.numeric(insur != 'private'))) |> 
+    mutate(subgroup = factor(as.numeric(insur != 'private'), ordered=FALSE)) |> 
     select(participant_id, subgroup)
 }
 
 get_pri_sub_is_alc_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, psub_1) |>
-    mutate(subgroup = as.factor(psub_1 == 1)) |>
+    mutate(subgroup = factor(psub_1 == 1, ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_dast_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, dast) |>
-    mutate(subgroup = as.factor(as.numeric(dast >= 3))) |>
-    mutate(subgroup = addNA(subgroup)) |>
+    mutate(subgroup = factor(as.numeric(dast >= 3), ordered=FALSE)) |>
+    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
 get_phq_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, phq) |>
-    mutate(subgroup = as.factor(as.numeric(phq >= 10))) |>
+    mutate(subgroup = factor(as.numeric(phq >= 10), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_gad_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, gad) |>
-    mutate(subgroup = as.factor(as.numeric(gad >= 10))) |>
+    mutate(subgroup = factor(as.numeric(gad >= 10), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
@@ -82,7 +82,7 @@ get_bscq_subgroups <- function(dat) {
   med_bscq <- median(dat$bscq, na.rm=TRUE)
   subgroups <- dat |>
     select(participant_id, bscq) |>
-    mutate(subgroup = as.factor(as.numeric(bscq >= med_bscq))) |>
+    mutate(subgroup = factor(as.numeric(bscq >= med_bscq), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
@@ -90,14 +90,14 @@ get_sipad_subgroups <- function(dat) {
   med_sipad <- median(dat$sipad, na.rm=TRUE)
   subgroups <- dat |>
     select(participant_id, sipad) |>
-    mutate(subgroup = as.factor(as.numeric(sipad >= med_sipad))) |>
+    mutate(subgroup = factor(as.numeric(sipad >= med_sipad), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_screen_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, screen) |>
-    mutate(subgroup = as.factor(screen)) |>
+    mutate(subgroup = factor(screen, ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
@@ -105,7 +105,7 @@ get_baseline_use_subgroups <- function(dat) {
   med_p30 <- median(dat$p30, na.rm=TRUE)
   sugroups <- dat |>
     select(participant_id, p30) |>
-    mutate(subgroup = as.factor(as.numeric(p30 >= med_p30))) |>
+    mutate(subgroup = factor(as.numeric(p30 >= med_p30), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
@@ -113,7 +113,7 @@ get_taa_subgroups <- function(dat) {
   med_taa <- median(dat$taa, na.rm=TRUE)
   sugroups <- dat |>
     select(participant_id, taa) |>
-    mutate(subgroup = as.factor(as.numeric(taa >= med_taa))) |>
+    mutate(subgroup = factor(as.numeric(taa >= med_taa), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
@@ -121,23 +121,37 @@ get_qds_subgroups <- function(dat) {
   med_qds <- median(dat$qds, na.rm=TRUE)
   sugroups <- dat |>
     select(participant_id, qds) |>
-    mutate(subgroup = as.factor(as.numeric(qds >= med_qds))) |>
-    mutate(subgroup = addNA(subgroup)) |>
+    mutate(subgroup = factor(as.numeric(qds >= med_qds), ordered=FALSE)) |>
+    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
 get_crave_subgroups <- function(dat) {
-  # med_crave <- median(dat$crave, na.rm=TRUE)
   sugroups <- dat |>
     select(participant_id, crave) |>
-    mutate(subgroup = as.factor(as.numeric(crave >= 2))) |>
+    mutate(subgroup = factor(as.numeric(crave >= 2), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
 get_dx_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, mh) |>
-    mutate(subgroup = as.factor(as.numeric(mh == 'no_history'))) |>
+    mutate(subgroup = factor(as.numeric(mh == 'no_history'), ordered=FALSE)) |>
+    select(participant_id, subgroup)
+}
+
+get_csq_subgroups <- function(dat) {
+  subgroups <- dat |>
+    select(participant_id, eot_csq) |>
+    mutate(subgroup = 
+             case_when(
+               eot_csq <= 25 ~ 'low',
+               eot_csq >= 26 & eot_csq <= 30 ~ 'medium',
+               eot_csq >= 31 & eot_csq <= 32 ~ 'high',
+               TRUE ~ NA_character_
+             )) |>
+    mutate(subgroup = factor(subgroup, ordered=FALSE)) |>
+    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
@@ -180,6 +194,8 @@ get_subgrouping_fn <- function(subgroup_var) {
     return (get_crave_subgroups)
    } else if (subgroup_var == 'mh') {
     return (get_dx_subgroups)
+   } else if (subgroup_var == 'csq') {
+    return (get_csq_subgroups)
    }
    else {
     stop('Invalid subgrouping variable')
@@ -190,8 +206,9 @@ get_subgroup_cell_counts <- function(dat, subgroup_vars) {
   subgroup_cnts <- data.frame()
   for (subgroup_var in subgroup_vars) {
     subgrouping_fn <- get_subgrouping_fn(subgroup_var)
-    subgroups <- subgrouping_fn(dat)
+    subgroups <- subgrouping_fn(dat) 
     subgroups <- subgroups |>
+      filter(!is.na(subgroup)) |>
       group_by(subgroup) |>
       summarise(n = n()) |>
       mutate(subgroup_var = subgroup_var)

@@ -8,7 +8,9 @@ dat_combined_raw_q <- load_data_raw(rcc_rand_path,
                                       rcc_followup_path,
                                       id_rm_wd_path,
                                       screen_type = 'q',
-                                      screen_path = q_screen_path)
+                                      screen_path = q_screen_path,
+                                      app_engage_path,
+                                      rcc_pdf_path)
 
 dat_combined_raw_rcc <- load_data_raw(rcc_rand_path, 
                                       rcc_baseline_path, 
@@ -18,7 +20,9 @@ dat_combined_raw_rcc <- load_data_raw(rcc_rand_path,
                                       rcc_followup_path,
                                       id_rm_wd_path,
                                       screen_type = 'rcc',
-                                      screen_path = rcc_screen_path)
+                                      screen_path = rcc_screen_path,
+                                      app_engage_path,
+                                      rcc_pdf_path)
 
 
 dat_analysis <- load_data_analysis(rcc_rand_path, 
@@ -30,6 +34,8 @@ dat_analysis <- load_data_analysis(rcc_rand_path,
                                    id_rm_wd_path,
                                    q_screen_path, 
                                    rcc_screen_path,
+                                   app_engage_path,
+                                   rcc_pdf_path,
                                    var_name_mapping_path) 
 
 # Randomized and has baseline
@@ -38,12 +44,18 @@ dat_rand_base <- dat_analysis |>
   subset_has_baseline() |>
   subset_has_p30()
 
-# Randomized, retained, has baseline
+# Randomized, has baseline, did not withdraw, and has non-zero substance use
 dat_rand_ret_base <- dat_analysis |>
   subset_randomized() |>
   subset_has_baseline() |>
   subset_retained() |>
   subset_has_p30()
+
+# Randomized, has baseline, but withdrew or had zero substance use
+dat_rand_not_ret_base <- dat_analysis |>
+  subset_randomized() |>
+  subset_has_baseline() |>
+  subset_not_retained_no_p30() 
 
 # Construct data for missingness analysis
 dat_missingness <- dat_rand_base |>
@@ -59,10 +71,23 @@ dat_balance_table <- dat_rand_ret_base |>
   reverse_code_sps_items() |>
   fill_99_with_na(c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS, AVERAGED_COMPOSITE_VARS)) |>
   set_composite_sums(SUMMED_COMPOSITE_VARS, drop_items = FALSE) |>
+  set_eot_csq () |>
   set_composite_sums(P30_VARS, exclude_substr = c('tob'), drop_items=FALSE, na_rm=TRUE) |>
   set_composite_means(AVERAGED_COMPOSITE_VARS, drop_items = FALSE) |>
   set_composite_products(MULTIPLIED_COMPOSITE_VARS, drop_items=FALSE) |>
-  set_retention_status(c('eot', 'mid', 'followup')) 
+  set_pst_p30 (c('eot', 'mid', 'followup')) |> # set primary, secondary, tertiary problematic substance use occasions
+  set_retention_status(c('eot', 'mid', 'followup'))
+
+# Construct data for withdrawn participant balance table
+dat_not_ret_balance_table <- dat_rand_not_ret_base |>
+  set_therapy_status() |>
+  reverse_code_sps_items() |>
+  fill_99_with_na(c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS, AVERAGED_COMPOSITE_VARS)) |>
+  set_composite_sums(SUMMED_COMPOSITE_VARS, drop_items = FALSE) |>
+  set_eot_csq () |>
+  set_composite_sums(P30_VARS, exclude_substr = c('tob'), drop_items=FALSE, na_rm=TRUE) |>
+  set_composite_means(AVERAGED_COMPOSITE_VARS, drop_items = FALSE) |>
+  set_composite_products(MULTIPLIED_COMPOSITE_VARS, drop_items=FALSE) 
 
 # Construct data for descriptive analyses
 dat_descriptive <- dat_rand_base |>
@@ -72,10 +97,12 @@ dat_descriptive <- dat_rand_base |>
   fill_99_with_na(c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS)) |>
   fill_na_with_mean(SUMMED_COMPOSITE_VARS) |>
   set_composite_sums(SUMMED_COMPOSITE_VARS, drop_items=FALSE) |>
+  set_eot_csq () |>
   set_composite_sums(P30_VARS, exclude_substr = c('tob'), drop_items=FALSE, na_rm=TRUE) |>
   fill_na_with_0(P30_VARS) |> # if '{timept}_p30' is missing, assume it is 0
   set_composite_means(AVERAGED_COMPOSITE_VARS, drop_items=FALSE) |>
   set_composite_products(MULTIPLIED_COMPOSITE_VARS, drop_items=FALSE) |>
+  set_pst_p30 (c('eot', 'mid', 'followup')) |> # set primary, secondary, tertiary problematic substance use occasions
   set_delta_vars(EOT_OUTCOME_VARS, 'eot') |>
   set_delta_vars(MID_OUTCOME_VARS, 'mid') |>
   set_delta_vars(FOLLOWUP_OUTCOME_VARS, 'followup') |>
@@ -89,10 +116,12 @@ dat_outcome_regression <- dat_rand_base |>
   fill_99_with_na(c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS)) |>
   fill_na_with_mean(SUMMED_COMPOSITE_VARS) |>
   set_composite_sums(SUMMED_COMPOSITE_VARS, drop_items=FALSE) |>
+  set_eot_csq () |>
   set_composite_sums(P30_VARS, exclude_substr = c('tob'), drop_items=FALSE, na_rm=TRUE) |>
   fill_na_with_0(P30_VARS) |> # if '{timept}_p30' is missing, assume it is 0
   set_composite_means(AVERAGED_COMPOSITE_VARS, drop_items=FALSE) |>
   set_composite_products(MULTIPLIED_COMPOSITE_VARS, drop_items=FALSE) |>
+  set_pst_p30 (c('eot', 'mid', 'followup')) |> # set primary, secondary, tertiary problematic substance use occasions 
   recode_sps_for_branching(c('sps', 'eot_sps')) |>
   recode_dast_for_branching(c('dast', 'eot_dast')) |>
   set_delta_vars(EOT_OUTCOME_VARS, 'eot') |>

@@ -47,3 +47,17 @@ subset_has_outcome <- function(dat, outcome_var, timept=NULL) {
   dat <- dat |> drop_na(!!sym(outcome_var))
   return (dat)
 }
+
+subset_not_retained_no_p30 <- function(dat) {
+  dat |> 
+    filter((!is.na(withdraw) & participant_id != 180) | participant_id == 58 ) |>
+    filter(rowSums(!is.na(pick(starts_with('p30') & !contains('tob')))) == 0 |
+           rowSums(pick(starts_with('p30') & !contains('tob')), na.rm=TRUE) == 0)
+}
+
+subset_per_protocol <- function(data) {
+  data |>
+    mutate(weeks_active = rowSums(pick(starts_with("days_active_w")) > 0), na.rm=TRUE) |>
+    mutate(n_pdfs = rowSums(across(w1_complete:w8_complete), na.rm=TRUE)) |>
+    filter(group == 1 & weeks_active >=4 | group == 2 & n_pdfs >=4)
+}

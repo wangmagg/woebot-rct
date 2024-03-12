@@ -20,10 +20,10 @@ run_ttest <- function(dat, outcome_var, retain_var, save_dir) {
   dat <- dat |> filter(!!sym(retain_var) == 1)
   
   formula <- as.formula(paste0(outcome_var, " ~ group"))
-  ttest_res <- t.test(formula, dat)
-  ttest_res |>
-    broom::tidy() |>
-    write_csv(file.path(save_dir, save_fname))
+  ttest_res <- t.test(formula, dat) |>
+    broom::tidy()
+  
+  write_csv(ttest_res, file.path(save_dir, save_fname))
   
   return (ttest_res)
 }

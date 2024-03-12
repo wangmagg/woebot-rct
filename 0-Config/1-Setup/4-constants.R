@@ -19,10 +19,10 @@ AVERAGED_COMPOSITE_VARS <- c('bscq', 'eot_bscq', 'mid_bscq', 'followup_bscq')
 
 P30_VARS <- c('p30', 'eot_p30', 'mid_p30', 'followup_p30')
 
-BASELINE_OUTCOME_VARS <- c('p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 'crave', 'heavy', 'sipad', 'taa', 'qds')
-EOT_OUTCOME_VARS <- c('p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 'crave', 'heavy', 'sipad', 'taa', 'qds')
-MID_OUTCOME_VARS <- c('p30', 'bscq', 'gad', 'phq', 'crave',  'heavy', 'sipad', 'qds')
-FOLLOWUP_OUTCOME_VARS <- c('p30', 'bscq', 'gad', 'phq', 'crave', 'heavy', 'sipad', 'qds')
+BASELINE_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 'crave', 'heavy', 'sipad', 'taa', 'qds')
+EOT_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 'crave', 'heavy', 'sipad', 'taa', 'qds')
+MID_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'gad', 'phq', 'crave',  'heavy', 'sipad', 'qds')
+FOLLOWUP_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'gad', 'phq', 'crave', 'heavy', 'sipad', 'qds')
 
 OUTCOME_VARS <- c(BASELINE_OUTCOME_VARS, EOT_OUTCOME_VARS, MID_OUTCOME_VARS, FOLLOWUP_OUTCOME_VARS)
 OUTCOME_VARS_DICT <- list('baseline' = BASELINE_OUTCOME_VARS,
@@ -53,4 +53,5 @@ SUBGROUP_VARS <- c('age',
                    'qds',
                    'taa',
                    'crave',
-                   'mh')
+                   'mh',
+                   'csq')

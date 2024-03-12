@@ -1,9 +1,43 @@
+extract_email <- function(metadata) {
+  rhs_email_field <- strsplit(metadata, "email")[[1]][2]
+  email_field <- strsplit(rhs_email_field, ",")[[1]][1]
+  email <- str_replace_all(email_field, "(['\"':])", "")
+  email_lower <- tolower(email)
+}
+
+add_engage_dat <- function(base_dat, 
+                           app_engage_path,
+                           rcc_pdf_path) {
+  
+  app_engage_dat <- read_excel(app_engage_path, sheet='sud2 raw data') |>
+    mutate(emailaddress = tolower(emailaddress))
+  
+  pdf_dat <- read_csv(rcc_pdf_path, show_col_types=FALSE) |>
+    group_by(participant_id) |>
+    summarize(w1_complete = sum(`Group 2 Info_complete` == 2, na.rm=TRUE),
+              w2_complete = sum(`Week 2 PDF_complete` == 2, na.rm=TRUE),
+              w3_complete = sum(`Week 3 PDF_complete` == 2, na.rm=TRUE),
+              w4_complete = sum(`Week 4 PDF_complete` == 2, na.rm=TRUE),
+              w5_complete = sum(`Week 5 PDF_complete` == 2, na.rm=TRUE),
+              w6_complete = sum(`Week 6 PDF_complete` == 2, na.rm=TRUE),
+              w7_complete = sum(`Week 7 PDF_complete` == 2, na.rm=TRUE),
+              w8_complete = sum(`Week 8 PDF_complete` == 2, na.rm=TRUE), .groups='drop')
+  
+  base_dat <- base_dat |>  
+    rowwise() |>
+    mutate(emailaddress = extract_email(redcap_record_metadata)) |>
+    left_join(app_engage_dat, by=c("emailaddress")) |>
+    left_join(pdf_dat, by=c("participant_id"))
+}
+
 load_survey_dat <- function(rcc_rand_path, 
                             rcc_baseline_path, 
                             rcc_withdraw_path, 
                             rcc_mid_path, 
                             rcc_eot_path, 
-                            rcc_followup_path) {
+                            rcc_followup_path,
+                            app_engage_path,
+                            rcc_pdf_path) {
   # Read in data
   rand_dat <- read_csv(rcc_rand_path, show_col_types=FALSE) |>
     select(-redcap_system_data_format_version, 
@@ -13,6 +47,7 @@ load_survey_dat <- function(rcc_rand_path,
            -redcap_record_metadata)
   
   baseline_dat <- read_csv(rcc_baseline_path, show_col_types=FALSE) |>
+    add_engage_dat(app_engage_path, rcc_pdf_path) |>
     select(-redcap_system_data_format_version, 
            -redcap_study, 
            -redcap_event_name, 
@@ -62,8 +97,7 @@ load_survey_dat <- function(rcc_rand_path,
     left_join(withdraw_dat, by=c('participant_id', 'redcap_subject_screening_number')) 
   
   # Remove test participant
-  dat <- dat |>
-    filter(participant_id != 1)
+  dat <- dat |> filter(participant_id != 1)
 }
 
 load_screen_q_dat <- function(q_screen_path, id_rm_wd_path) {
@@ -86,6 +120,8 @@ load_screen_rcc_dat <- function(rcc_screen_path, id_rm_wd_path) {
     filter(screening_id != 'Test') |>
     select(-redcap_subject_screening_number)
 }
+
+
 
 extract_cols_q_screen_dat <- function(q_screen_dat) {
   q_screen_dat <- q_screen_dat |>
@@ -148,14 +184,18 @@ load_data_raw <- function(rcc_rand_path,
                           rcc_followup_path,
                           id_rm_wd_path,
                           screen_type,
-                          screen_path) {
+                          screen_path,
+                          app_engage_path,
+                          rcc_pdf_path) {
   
   dat_survey <- load_survey_dat(rcc_rand_path, 
                                 rcc_baseline_path, 
                                 rcc_withdraw_path, 
                                 rcc_mid_path, 
                                 rcc_eot_path, 
-                                rcc_followup_path)
+                                rcc_followup_path,
+                                app_engage_path,
+                                rcc_pdf_path)
   
   if (screen_type == 'q') {
     dat_screen <- load_screen_q_dat(screen_path, id_rm_wd_path)
@@ -176,6 +216,8 @@ load_data_analysis <- function(rcc_rand_path,
                                id_rm_wd_path,
                                q_screen_path, 
                                rcc_screen_path,
+                               app_engage_path,
+                               rcc_pdf_path,
                                var_name_mapping_path) {
   
   dat_survey <- load_survey_dat(rcc_rand_path, 
@@ -183,14 +225,17 @@ load_data_analysis <- function(rcc_rand_path,
                                 rcc_withdraw_path, 
                                 rcc_mid_path, 
                                 rcc_eot_path, 
-                                rcc_followup_path)
-  
+                                rcc_followup_path,
+                                app_engage_path,
+                                rcc_pdf_path)
+
   dat_screen_q <- load_screen_q_dat(q_screen_path, id_rm_wd_path) |>
     extract_cols_q_screen_dat()
   dat_screen_rcc <- load_screen_rcc_dat(rcc_screen_path, id_rm_wd_path) |>
     extract_cols_rcc_screen_dat()
   
-  dat_survey_screen_q <- dat_survey |> inner_join(dat_screen_q, by=c('participant_id'))
+  dat_survey_screen_q <- dat_survey |> 
+    inner_join(dat_screen_q, by=c('participant_id'))
   dat_survey_screen_rcc <- dat_survey |> 
     select(-sq36) |>
     inner_join(dat_screen_rcc, by=c('participant_id'))
@@ -206,6 +251,8 @@ load_data_analysis <- function(rcc_rand_path,
   
   var_name_no_mapping <- read_xlsx(var_name_mapping_path, sheet="no_mapping")
   
-  dat |> select(all_of(var_name_mapping$var_name), all_of(var_name_no_mapping$var_name))
-  
+  dat |> select(all_of(var_name_mapping$var_name), 
+                all_of(var_name_no_mapping$var_name),
+                starts_with("days_active_w"),
+                contains("_complete"))
 }
