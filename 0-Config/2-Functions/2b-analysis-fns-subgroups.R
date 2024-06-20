@@ -1,3 +1,49 @@
+### Functions for defining subgroups
+
+#' Define subgroups by gender (man, woman)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
+get_gender_subgroups <- function(dat) {
+  subgroups <- dat |>
+    mutate(gender=fct_collapse(gender, "2" = c("2", "4"))) |>
+    select(participant_id, gender) |>
+    mutate(subgroup = factor(gender), ordered=FALSE) |>
+    select(participant_id, subgroup)
+}
+
+#' Define subgroups by race (White, Not White)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
+get_race_subgroups <- function(dat) {
+  subgroups <- dat |>
+    mutate(race = relevel(
+      fct_collapse(race, "not_white" = c("black", "other")),
+      ref="white"
+      )) |>
+    select(participant_id, race) |>
+    mutate(subgroup = factor(race), ordered=FALSE) |>
+    select(participant_id, subgroup)
+}
+
+#' Define subgroups by ethnicity (Hispanic, Non-hispanic, Missing)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
+get_eth_subgroups <- function(dat) {
+  subgroups <- dat |>
+    select(participant_id, eth) |>
+    mutate(subgroup = factor(eth), ordered=FALSE) |>
+    mutate(subgroup = case_when(eth == 99 ~ NA,
+                     TRUE ~ subgroup)) |>
+    select(participant_id, subgroup)
+}
+
+#' Define subgroups by CAGE-AID (2, 3, 4)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_cageaid_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, cageaid) |>
@@ -5,14 +51,21 @@ get_cageaid_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by therapy status (0, 1, 2)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_ther_status_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, ther_status) |>
     mutate(subgroup = factor(ther_status, ordered=FALSE)) |>
-    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by age (below, above medidan)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_age_subgroups <- function(dat) {
   med_age <- median(dat$age, na.rm=TRUE)
   subgroups <- dat |>
@@ -21,6 +74,10 @@ get_age_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by tobacco use (no use, at least 1 day of use)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_tobac_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, p30_tob) |>
@@ -28,6 +85,10 @@ get_tobac_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by employment status (employed, unemployed)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_empl_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, empl) |>
@@ -35,6 +96,10 @@ get_empl_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by education (high school, college and above)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_educ_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, educ) |>
@@ -42,6 +107,10 @@ get_educ_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by insurance status (private, not private)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_insur_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, insur) |>
@@ -49,6 +118,10 @@ get_insur_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by primary problematic substance (alcohol, not alcohol)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_pri_sub_is_alc_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, psub_1) |>
@@ -56,14 +129,21 @@ get_pri_sub_is_alc_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by DAST (below 3, 3 or above)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_dast_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, dast) |>
     mutate(subgroup = factor(as.numeric(dast >= 3), ordered=FALSE)) |>
-    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by PHQ (below 10, 10 or above)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_phq_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, phq) |>
@@ -71,6 +151,10 @@ get_phq_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by GAD (below 10, 10 or and above)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_gad_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, gad) |>
@@ -78,6 +162,10 @@ get_gad_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by BSCQ (below median, above median)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_bscq_subgroups <- function(dat) {
   med_bscq <- median(dat$bscq, na.rm=TRUE)
   subgroups <- dat |>
@@ -86,6 +174,10 @@ get_bscq_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by SIPAD (below median, above median)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_sipad_subgroups <- function(dat) {
   med_sipad <- median(dat$sipad, na.rm=TRUE)
   subgroups <- dat |>
@@ -94,6 +186,10 @@ get_sipad_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by screening type (REDCap, Qualtrics)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_screen_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, screen) |>
@@ -101,6 +197,10 @@ get_screen_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by past 30d substance use at baseline (below median, above median)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_baseline_use_subgroups <- function(dat) {
   med_p30 <- median(dat$p30, na.rm=TRUE)
   sugroups <- dat |>
@@ -109,6 +209,10 @@ get_baseline_use_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by TAA (below median, above median)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_taa_subgroups <- function(dat) {
   med_taa <- median(dat$taa, na.rm=TRUE)
   sugroups <- dat |>
@@ -117,15 +221,22 @@ get_taa_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by QDS, drinks per week (below median, above median)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_qds_subgroups <- function(dat) {
   med_qds <- median(dat$qds, na.rm=TRUE)
   sugroups <- dat |>
     select(participant_id, qds) |>
     mutate(subgroup = factor(as.numeric(qds >= med_qds), ordered=FALSE)) |>
-    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by cravings (less than 2, 2 or above)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_crave_subgroups <- function(dat) {
   sugroups <- dat |>
     select(participant_id, crave) |>
@@ -133,6 +244,10 @@ get_crave_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by mental health diagnosis (has had diagnosis, no history of diagnoses)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_dx_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, mh) |>
@@ -140,6 +255,10 @@ get_dx_subgroups <- function(dat) {
     select(participant_id, subgroup)
 }
 
+#' Define subgroups by CSQ (low, medium high)
+#' 
+#' @param dat Dataframe of survey data
+#' @returns 2-column dataframe with participant ID and subgroup label
 get_csq_subgroups <- function(dat) {
   subgroups <- dat |>
     select(participant_id, eot_csq) |>
@@ -151,57 +270,47 @@ get_csq_subgroups <- function(dat) {
                TRUE ~ NA_character_
              )) |>
     mutate(subgroup = factor(subgroup, ordered=FALSE)) |>
-    # mutate(subgroup = addNA(subgroup)) |>
     select(participant_id, subgroup)
 }
 
+#' Get the subgrouping function corresponding to the specified variable
+#' 
+#' @param subgroup_var Name of subgroup variable
+#' @returns Subgrouping function
 get_subgrouping_fn <- function(subgroup_var) {
-  if (subgroup_var == 'cageaid') {
-    return (get_cageaid_subgroups)
-  } else if (subgroup_var == 'ther_status') {
-    return (get_ther_status_subgroups)
-  } else if (subgroup_var == 'age') {
-    return (get_age_subgroups)
-  } else if (subgroup_var == 'p30_tob') {
-    return (get_tobac_subgroups)
-  } else if (subgroup_var == 'empl') {
-    return (get_empl_subgroups)
-  } else if (subgroup_var == 'educ') {
-    return (get_educ_subgroups)
-  } else if (subgroup_var == 'insur') {
-    return (get_insur_subgroups)
-  } else if (subgroup_var == 'pri_sub_is_alc') {
-    return (get_pri_sub_is_alc_subgroups)
-  } else if (subgroup_var == 'dast') {
-    return (get_dast_subgroups)
-  } else if (subgroup_var == 'phq') {
-    return (get_phq_subgroups)
-  } else if (subgroup_var == 'gad') {
-    return (get_gad_subgroups) 
-  } else if (subgroup_var == 'bscq') {
-      return (get_bscq_subgroups)
-  } else if (subgroup_var == 'sipad') {
-    return (get_sipad_subgroups) 
-  } else if (subgroup_var == 'screen') {
-    return (get_screen_subgroups)
-  } else if (subgroup_var == 'p30') {
-    return (get_baseline_use_subgroups) 
-  } else if (subgroup_var == 'taa') {
-    return (get_taa_subgroups)
-  } else if (subgroup_var == 'qds') {
-    return (get_qds_subgroups)
-  } else if (subgroup_var == 'crave') {
-    return (get_crave_subgroups)
-   } else if (subgroup_var == 'mh') {
-    return (get_dx_subgroups)
-   } else if (subgroup_var == 'csq') {
-    return (get_csq_subgroups)
-   }
-   else {
-    stop('Invalid subgrouping variable')
-  }
+  switch(
+    subgroup_var,
+    "gender" = get_gender_subgroups,
+    "race" = get_race_subgroups,
+    "eth" = get_eth_subgroups,
+    "cageaid" = get_cageaid_subgroups,
+    "ther_status" = get_ther_status_subgroups,
+    "age" = get_age_subgroups,
+    "p30_tob" = get_tobac_subgroups,
+    "empl" = get_empl_subgroups,
+    "educ" = get_educ_subgroups,
+    "insur" = get_insur_subgroups,
+    "pri_sub_is_alc" = get_pri_sub_is_alc_subgroups,
+    "dast" = get_dast_subgroups,
+    "phq" = get_phq_subgroups,
+    "gad" = get_gad_subgroups,
+    "bscq" = get_bscq_subgroups,
+    "sipad" = get_sipad_subgroups,
+    "screen" = get_screen_subgroups,
+    "p30" = get_baseline_use_subgroups,
+    "taa" = get_taa_subgroups,
+    "qds" = get_qds_subgroups,
+    "crave" = get_crave_subgroups,
+    "mh" = get_dx_subgroups,
+    "csq" = get_csq_subgroups
+  )
 }
 
+#' Get counts per subgroup 
+#' 
+#' @param dat Dataframe of survey data
+#' @param subgroup_vars List of subgroup variable names
+#' @returns Dataframe of subgroup cell counts
 get_subgroup_cell_counts <- function(dat, subgroup_vars) {
   subgroup_cnts <- data.frame()
   for (subgroup_var in subgroup_vars) {

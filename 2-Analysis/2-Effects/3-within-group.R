@@ -25,6 +25,7 @@ for (analysis_type in analysis_types) {
   timepts <- c('eot')
   group_lbls <- c(1, 2)
   
+  # Run within-group paired t-test comparing baseline and EOT values for each outcome 
   for (timept in timepts) {
     
     if (!dir.exists(str_c(save_dir, '/', timept))) {
@@ -38,6 +39,7 @@ for (analysis_type in analysis_types) {
       dat_outcome_to_fit <- subset_has_outcome(dat_outcome_regression,
                                                str_c('delta', timept, var, sep='_'),
                                                timept)
+      # Run paired t-test for each group
       for (group_lbl in group_lbls) {
         res <- run_paired_ttest(dat_outcome_to_fit,
                                 timept = timept,
@@ -51,6 +53,7 @@ for (analysis_type in analysis_types) {
         all_var_res <- bind_rows(all_var_res, res)
       }
     }
+    # Save results
     write.csv(all_var_res, str_c(save_dir, '/', timept, '/paired_ttest_', timept, '.csv'))
   }
 }

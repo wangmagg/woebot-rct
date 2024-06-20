@@ -26,6 +26,7 @@ for (analysis_type in analysis_types) {
   timepts <- c('eot', 'mid', 'followup')
   analyses_to_run <- c('ttest', 'regression', 'subgroup_regression')
   
+  # Run analyses across all timepoints
   for (timept in timepts) {
     outcome_var <- str_c('delta_', timept, '_p30')
     retain_var <- str_c('retained_', timept)

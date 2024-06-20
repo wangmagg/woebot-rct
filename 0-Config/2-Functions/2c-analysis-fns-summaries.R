@@ -1,3 +1,15 @@
+### Functions for performing descriptive summaries
+
+#' Get descriptive summary of variables
+#' Descriptives: Count, Mean, Std Dev, Min, Max, Cohen's D (for delta variables)
+#' 
+#' @param dat Dataframe of survey/screening data
+#' @param vars List of variable names
+#' @param save_prefix Prefix to add to filename where results are saved
+#' @param save_dir Directory to save results to
+#' @param cohens_d_vars List of variables to compute Cohen's D for
+#' @param by_group Boolean flag; if true, perform summaries by group
+#' @param grouping_var Name of grouping variable
 get_descriptive_summary <- function(dat, 
                                     vars,
                                     save_prefix,
@@ -34,6 +46,12 @@ get_descriptive_summary <- function(dat,
   return (all_summaries)
 }
 
+#' Get descriptive summary of past 30d substance use, grouped by primary problematic substance
+#' Descriptives: Mean, Std Dev
+#' 
+#' @param dat Dataframe of survey/screening data
+#' @param p30_vars_regex Regex string for substance use variables to perform summary over
+#' @param save_dir Directory to save results to
 get_substance_use_summary <- function(dat, p30_vars_regex, save_dir) {
   sub_use_summary <- dat |> 
     group_by(psub_1) |>

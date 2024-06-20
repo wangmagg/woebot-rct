@@ -39,17 +39,16 @@ get_balance(dat_tobac_grp,
             save_prefix='tobacco',
             save_dir = save_dir)
 
-csq_grp1_items <- str_c('eot_csq_grp1', c(1, 2, 3, 4, 5, 6, 7, 8), sep='_')
-csq_grp2_items <- str_c('eot_csq_grp2', c(1, 2, 3, 4, 5, 6, 7, 8), sep='_')
 
-get_descriptive_summary(dat_tobac_grp |> filter(retained_eot == 1, group == 1), 
-                        c('eot_csq_grp1', csq_grp1_items),
-                        grouping_var = 'tobac_grp', 
+csq_items <- str_c('eot_csq', c(1, 2, 3, 4, 5, 6, 7, 8), sep='_')
+get_descriptive_summary(dat_tobac_grp |> filter(retained_eot == 1, group == 1),
+                        vars=c('eot_csq', csq_items),
+                        grouping_var = 'tobac_grp',
                         save_prefix = 'csq_grp1_eot-retained',
                         save_dir = save_dir)
-get_descriptive_summary(dat_tobac_grp |> filter(retained_eot == 1, group == 2), 
-                        c('eot_csq_grp2', csq_grp2_items),
-                        grouping_var = 'tobac_grp', 
+get_descriptive_summary(dat_tobac_grp |> filter(retained_eot == 1, group == 2),
+                        vars=c('eot_csq', csq_items),
+                        grouping_var = 'tobac_grp',
                         save_prefix = 'csq_grp2_eot-retained',
                         save_dir = save_dir)
 

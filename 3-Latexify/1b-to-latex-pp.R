@@ -7,7 +7,7 @@ if (!dir.exists(save_dir)) {
   dir.create(save_dir, recursive = TRUE)
 }
 
-# T4 & 6: Primary & Secondary Outcomes at Baseline, 4-weeks, 8-weeks, 12-weeks
+# Primary & Secondary Outcomes at Baseline, 4-weeks, 8-weeks, 12-weeks
 base_fname <- file.path(ANALYSIS_OUT_DIR, 
                         '1-Descriptives-Output', 
                         '2b-Outcome-Vars-Summary', 
@@ -37,7 +37,7 @@ for (timept in c('mid', 'eot', 'followup')) {
   }
 }
 
-# T5: Estimated Treatment Effects at 4-weeks, 8-weeks, 12-weeks
+# Estimated Treatment Effects at 4-weeks, 8-weeks, 12-weeks
 res_dir <- file.path(ANALYSIS_OUT_DIR, 
                      '2-Effects-Output', 
                      '2a-Between-Group-Primary',
@@ -58,7 +58,7 @@ for (timept in c('mid', 'eot', 'followup')) {
 }
 
 
-# T10: Within Group "Effects" at 4-weeks, 8-weeks, 12-weeks
+# Within Group "Effects" at 4-weeks, 8-weeks, 12-weeks
 descriptives_dir <- file.path(ANALYSIS_OUT_DIR, 
                               '1-Descriptives-Output', 
                               '2b-Outcome-Vars-Summary',
@@ -85,4 +85,34 @@ for (timept in c('mid', 'eot', 'followup')) {
   
   save_fname <- str_c('within_group_effect-', timept, '.csv')
   write.csv(res_latex, file.path(save_dir, save_fname), row.names = FALSE)
+}
+
+# Estimated Secondary Outcome Treatment Effects at 4-weeks, 8-weeks, 12-weeks
+res_dir <- file.path(ANALYSIS_OUT_DIR, 
+                     '2-Effects-Output', 
+                     '2b-Between-Group-Secondary',
+                     'perprot')
+for (timept in c('mid', 'eot', 'followup')) {
+  outcome_vars_timept <- OUTCOME_VARS_DICT[[timept]]
+  secondary_outcome_vars_timept <- outcome_vars_timept[outcome_vars_timept != 'p30']
+  
+  res_latex_combined <- data.frame()
+  for (outcome_var in secondary_outcome_vars_timept) {
+    reg_outcome_var_fname <- str_c(res_dir, '/', timept, '/regression/res_delta_', timept, '_', 
+                                   outcome_var, '_ols.csv')
+    ttest_outcome_var_fname <- str_c(res_dir, '/', timept, '/ttest/ttest_delta_', timept, '_', 
+                                     outcome_var, '.csv')
+    
+    if (file.exists(reg_outcome_var_fname) & file.exists(ttest_outcome_var_fname)) {
+      res_reg <- read.csv(reg_outcome_var_fname) |> 
+        mutate(var = outcome_var)
+      res_ttest <- read.csv(ttest_outcome_var_fname) |> 
+        mutate(var = outcome_var)
+      res_latex <- make_timept_est_latex(res_reg, res_ttest, c('var'))
+      res_latex_combined <- bind_rows(res_latex_combined, res_latex)
+    }
+  }
+  
+  save_fname <- str_c('treatment_effect_secondary-', timept, '.csv')
+  write.csv(res_latex_combined, file.path(save_dir, save_fname), row.names = FALSE)
 }

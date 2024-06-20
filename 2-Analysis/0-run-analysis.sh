@@ -7,3 +7,6 @@ Rscript 2-Analysis/2-Effects/0-run-effects.R
 
 echo "2-Analysis/3-Engagement/0-run-engagement.R"
 Rscript 2-Analysis/3-Engagement/0-run-engagement.R
+
+echo "2-Analysis/4-BivarCorrelations/0-bivariate-corr.R"
+Rscript 2-Analysis/4-BivarCorrelations/0-bivariate-corr.R

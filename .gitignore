@@ -8,5 +8,6 @@ renv
 *.Rproj
 *.DS_Store
 
+*.html
 *-Output
 4-Sanity

@@ -19,12 +19,12 @@ for (analysis_type in analysis_types) {
   var_names <- c('group', 'age', 'sex', 'gender', 'orient', 'eth', 'race',
                  'marital', 'educ', 'empl', 'disab', 'insur',
                  'ther', 'trt', 'med', 'psych_med',
-                 'mh', 'phq', 'gad', 'sps', 'pst_sub', 'pri_sub', 'sec_sub', 'ter_sub',
-                 'dast', 'sipad', 'cageaid', 'bscq', 'crave', 'taa', 'qds', 'p30_per_sub', 'p30', 'csq')
+                 'mh', 'phq', 'gad', 'sps', 'pst_sub',
+                 'dast', 'sipad', 'cageaid', 'bscq', 'crave', 'taa', 'qds', 'p30_per_sub', 'p30')
   
   get_balance(dat_balance_table, c('group'), 
-              var_names, save_prefix='grouped', save_dir)
+              var_names, save_prefix='grouped', save_dir, get_smd=TRUE)
   get_balance(dat_balance_table, c(), 
-              var_names, save_prefix='all', save_dir)
+              var_names, save_prefix='all', save_dir, get_smd=FALSE)
 }
 

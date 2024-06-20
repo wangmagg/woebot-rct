@@ -1,17 +1,12 @@
-run_shapiro_test <- function(dat, group_lbl, outcome_var, retain_var, save_dir) {
-  if (!dir.exists(save_dir)) {
-    dir.create(save_dir)
-  }
-  save_fname <- sprintf('shapiro_group-%s_%s.csv', group_lbl, outcome_var)
-  dat <- dat |> 
-    filter(group == group_lbl) |>
-    filter(!!sym(retain_var) == 1) 
-  shapiro_res <- shapiro.test(dat[[outcome_var]])
-  shapiro_res |>
-    broom::tidy() |>
-    write_csv(file.path(save_dir, save_fname))
-}
+### Functions for running t-tests
 
+#' Run t-test to compare change scores across groups
+#' 
+#' @param dat Data
+#' @param outcome_var Outcome variable name
+#' @param retain_var Retention status variable name
+#' @param save_dir Directory to save results to
+#' @returns Dataframe of t-test results
 run_ttest <- function(dat, outcome_var, retain_var, save_dir) {
   if (!dir.exists(save_dir)) {
     dir.create(save_dir)
@@ -28,6 +23,14 @@ run_ttest <- function(dat, outcome_var, retain_var, save_dir) {
   return (ttest_res)
 }
 
+#' Run paired t-test to compare the baseline-to-timept change in outcome within a group
+#' 
+#' @param dat Data
+#' @param group_lbl Name of group
+#' @param timept Timepoint to compare baseline to ('mid', 'eot', 'followup')
+#' @param outcome_var Outcome variable name
+#' @param retain_var Retention status variable name
+#' @param save_dir Directory to save results to
 run_paired_ttest <- function(dat, group_lbl, timept, outcome_var, retain_var, save_dir) {
   if (!dir.exists(save_dir)) {
     dir.create(save_dir)

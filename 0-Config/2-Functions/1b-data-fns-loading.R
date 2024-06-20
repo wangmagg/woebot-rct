@@ -1,3 +1,8 @@
+### Functions for loading data
+
+#' Extract email from metadata in screening file
+#' 
+#' @param metadata String containing metadata
 extract_email <- function(metadata) {
   rhs_email_field <- strsplit(metadata, "email")[[1]][2]
   email_field <- strsplit(rhs_email_field, ",")[[1]][1]
@@ -5,6 +10,11 @@ extract_email <- function(metadata) {
   email_lower <- tolower(email)
 }
 
+#' Merge app engagement data with survey data
+#' 
+#' @param base_dat Baseline survey data dataframe
+#' @param app_engagement_path Path to file with app engagement data
+#' @param rcc_pdf_path Path to file with PDF engagement data
 add_engage_dat <- function(base_dat, 
                            app_engage_path,
                            rcc_pdf_path) {
@@ -30,6 +40,18 @@ add_engage_dat <- function(base_dat,
     left_join(pdf_dat, by=c("participant_id"))
 }
 
+#' Load survey and engagement data
+#' 
+#' @param rcc_rand_path Path to randomization information
+#' @param rcc_baseline_path Path to baseline survey data
+#' @param rcc_withdraw_path Path to withdrawal information
+#' @param rcc_mid_path Path to midpoint (4wk) survey data
+#' @param rcc_eot_path Path to EOT (8wk) survey data
+#' @param rcc_followup_path Path to followup (12wk) survey data
+#' @param app_engagement_path Path to app engagement data
+#' @param rcc_pdf_path Path to PDF engagement data
+#' @param add_engage Boolean flag for whether or not to merge engagement data
+#' @returns Combined survey and engagement data
 load_survey_dat <- function(rcc_rand_path, 
                             rcc_baseline_path, 
                             rcc_withdraw_path, 
@@ -37,8 +59,9 @@ load_survey_dat <- function(rcc_rand_path,
                             rcc_eot_path, 
                             rcc_followup_path,
                             app_engage_path,
-                            rcc_pdf_path) {
-  # Read in data
+                            rcc_pdf_path,
+                            add_engage=TRUE) {
+  # Randomization data
   rand_dat <- read_csv(rcc_rand_path, show_col_types=FALSE) |>
     select(-redcap_system_data_format_version, 
            -redcap_study, 
@@ -46,21 +69,27 @@ load_survey_dat <- function(rcc_rand_path,
            -redcap_study_metadata, 
            -redcap_record_metadata)
   
-  baseline_dat <- read_csv(rcc_baseline_path, show_col_types=FALSE) |>
-    add_engage_dat(app_engage_path, rcc_pdf_path) |>
+  # Baseline survey 
+  baseline_dat <- read_csv(rcc_baseline_path, show_col_types=FALSE) 
+  if (add_engage) {
+    baseline_dat <- baseline_dat |> add_engage_dat(app_engage_path, rcc_pdf_path)
+  } 
+  baseline_dat <- baseline_dat |>
     select(-redcap_system_data_format_version, 
            -redcap_study, 
            -redcap_event_name, 
-           -redcap_study_metadata, 
+           -redcap_study_metadata,
            -redcap_record_metadata)
   
+  # Removals and withdrawals
   withdraw_dat <- read_csv(rcc_withdraw_path, show_col_types=FALSE) |>
     select(-redcap_system_data_format_version, 
            -redcap_study, 
            -redcap_event_name, 
-           -redcap_study_metadata, 
+           -redcap_study_metadata,
            -redcap_record_metadata)
   
+  # 4-week (midpoint) survey
   mid_dat <- read_csv(rcc_mid_path, show_col_types=FALSE) |>
     select(-redcap_system_data_format_version, 
            -redcap_study, 
@@ -68,6 +97,7 @@ load_survey_dat <- function(rcc_rand_path,
            -redcap_study_metadata, 
            -redcap_record_metadata)
   
+  # 8-week (EOT) survey
   eot_dat <- read_csv(rcc_eot_path, show_col_types=FALSE) |>
     select(-redcap_system_data_format_version, 
            -redcap_study, 
@@ -75,6 +105,7 @@ load_survey_dat <- function(rcc_rand_path,
            -redcap_study_metadata, 
            -redcap_record_metadata)
   
+  # 12-week (follow-up) survey
   followup_dat <- read_csv(rcc_followup_path, show_col_types=FALSE) |>
     select(-redcap_system_data_format_version, 
            -redcap_study, 
@@ -100,6 +131,13 @@ load_survey_dat <- function(rcc_rand_path,
   dat <- dat |> filter(participant_id != 1)
 }
 
+#' Load Qualtrics screening data
+#' 
+#' @param q_screen_path Path to Qualtrics screening data file
+#' @param id_rm_wd_path Path to IDs for removals and withdrawals,
+#' used to map the ID's in the Qualtrics screening file to the ID's
+#' in the survey files
+#' @returns Dataframe with Qualtrics screening data
 load_screen_q_dat <- function(q_screen_path, id_rm_wd_path) {
   q_id_rm_wd_dat <- read_excel(id_rm_wd_path, sheet='Subject IDs Q Screening')
   screen_q_dat <- read_csv(q_screen_path, show_col_types=F) |>
@@ -110,6 +148,13 @@ load_screen_q_dat <- function(q_screen_path, id_rm_wd_path) {
     filter(screening_id != 'Test') 
 }
 
+#' Load REDCap screening data
+#' 
+#' @param q_screen_path Path to REDCap screening data file
+#' @param id_rm_wd_path Path to IDs for removals and withdrawals,
+#' used to map the ID's in the REDCap screening file to the ID's
+#' in the survey files
+#' @returns Dataframe with REDCap screening data
 load_screen_rcc_dat <- function(rcc_screen_path, id_rm_wd_path) {
   rcc_id_rm_wd_dat <- read_excel(id_rm_wd_path, sheet='Subject IDs RCC Screening')
   screen_rcc_dat <- read_csv(rcc_screen_path, show_col_types=F, col_types=list(sq37_other=col_character())) |>
@@ -121,8 +166,10 @@ load_screen_rcc_dat <- function(rcc_screen_path, id_rm_wd_path) {
     select(-redcap_subject_screening_number)
 }
 
-
-
+#' Extract and reformat demographic information from Qualtrics screening data
+#' 
+#' @param q_screen_dat Dataframe of Qualtrics screening data
+#' @returns Dataframe containing the demographic columns needed for analyses
 extract_cols_q_screen_dat <- function(q_screen_dat) {
   q_screen_dat <- q_screen_dat |>
     mutate(screen = 2) |>
@@ -153,6 +200,10 @@ extract_cols_q_screen_dat <- function(q_screen_dat) {
     select(participant_id, screen, age, sex, eth, race_1, race_2, race_3, race_4, race_5, race_6, race_99, race_mult)
 }
 
+#' Extract and reformat demographic information from REDCap screening data
+#' 
+#' @param q_screen_dat Dataframe of REDCap screening data
+#' @returns Dataframe containing the demographic columns needed for analyses
 extract_cols_rcc_screen_dat <- function(rcc_screen_dat) {
   rcc_screen_dat <- rcc_screen_dat |>
     mutate(screen = 1) |>
@@ -176,6 +227,22 @@ extract_cols_rcc_screen_dat <- function(rcc_screen_dat) {
     select(participant_id, screen, age, sex, eth, race_1, race_2, race_3, race_4, race_5, race_6, race_99, race_mult, sq36)
 }
 
+#' Load all (survey + screening) data
+#' 
+#' @param rcc_rand_path Path to randomization information
+#' @param rcc_baseline_path Path to baseline survey data
+#' @param rcc_withdraw_path Path to withdrawal information
+#' @param rcc_mid_path Path to midpoint (4wk) survey data
+#' @param rcc_eot_path Path to EOT (8wk) survey data
+#' @param rcc_followup_path Path to followup (12wk) survey data
+#' @param id_rm_wd_path Path to IDs for removals and withdrawals,
+#' used to map the ID's in the screening files to the ID's
+#' in the survey files
+#' @param screen_type String 'q' for Qualtrics screen, 'rcc' for REDCap screen
+#' @param screen_path Path to screening file
+#' @param app_engagement_path Path to app engagement data
+#' @param rcc_pdf_path Path to PDF engagement data
+#' @param add_engage Boolean flag for whether or not to merge engagement data
 load_data_raw <- function(rcc_rand_path, 
                           rcc_baseline_path, 
                           rcc_withdraw_path, 
@@ -186,8 +253,10 @@ load_data_raw <- function(rcc_rand_path,
                           screen_type,
                           screen_path,
                           app_engage_path,
-                          rcc_pdf_path) {
+                          rcc_pdf_path,
+                          add_engage=TRUE) {
   
+  # Load survey data, then merge with screening data
   dat_survey <- load_survey_dat(rcc_rand_path, 
                                 rcc_baseline_path, 
                                 rcc_withdraw_path, 
@@ -195,7 +264,8 @@ load_data_raw <- function(rcc_rand_path,
                                 rcc_eot_path, 
                                 rcc_followup_path,
                                 app_engage_path,
-                                rcc_pdf_path)
+                                rcc_pdf_path,
+                                add_engage)
   
   if (screen_type == 'q') {
     dat_screen <- load_screen_q_dat(screen_path, id_rm_wd_path)
@@ -204,9 +274,27 @@ load_data_raw <- function(rcc_rand_path,
   }
   
   dat_survey <- dat_survey |> select(-starts_with('sq'), -starts_with('SQ'))
-  dat <- dat_survey |> inner_join(dat_screen, by=c('participant_id'))
+  dat <- dat_screen |> inner_join(dat_survey, by=c('participant_id'))
 }
   
+#' Load all (survey + screening) data and keep only variables used in analysis,
+#' renaming the variables so that they have more interpretable names
+#' 
+#' @param rcc_rand_path Path to randomization information
+#' @param rcc_baseline_path Path to baseline survey data
+#' @param rcc_withdraw_path Path to withdrawal information
+#' @param rcc_mid_path Path to midpoint (4wk) survey data
+#' @param rcc_eot_path Path to EOT (8wk) survey data
+#' @param rcc_followup_path Path to followup (12wk) survey data
+#' @param id_rm_wd_path Path to IDs for removals and withdrawals,
+#' used to map the ID's in the screening files to the ID's
+#' in the survey files
+#' @param screen_type String 'q' for Qualtrics screen, 'rcc' for REDCap screen
+#' @param screen_path Path to screening file
+#' @param app_engagement_path Path to app engagement data
+#' @param rcc_pdf_path Path to PDF engagement data
+#' @param var_name_mapping_path Path to file containing variable name mappings
+#' @param add_engage Boolean flag for whether or not to merge engagement data
 load_data_analysis <- function(rcc_rand_path, 
                                rcc_baseline_path, 
                                rcc_withdraw_path, 
@@ -218,8 +306,10 @@ load_data_analysis <- function(rcc_rand_path,
                                rcc_screen_path,
                                app_engage_path,
                                rcc_pdf_path,
-                               var_name_mapping_path) {
+                               var_name_mapping_path,
+                               add_engage=TRUE) {
   
+  # Load survey data, then merge with screening data
   dat_survey <- load_survey_dat(rcc_rand_path, 
                                 rcc_baseline_path, 
                                 rcc_withdraw_path, 
@@ -227,18 +317,18 @@ load_data_analysis <- function(rcc_rand_path,
                                 rcc_eot_path, 
                                 rcc_followup_path,
                                 app_engage_path,
-                                rcc_pdf_path)
+                                rcc_pdf_path,
+                                add_engage)
 
   dat_screen_q <- load_screen_q_dat(q_screen_path, id_rm_wd_path) |>
     extract_cols_q_screen_dat()
   dat_screen_rcc <- load_screen_rcc_dat(rcc_screen_path, id_rm_wd_path) |>
     extract_cols_rcc_screen_dat()
   
-  dat_survey_screen_q <- dat_survey |> 
-    inner_join(dat_screen_q, by=c('participant_id'))
-  dat_survey_screen_rcc <- dat_survey |> 
-    select(-sq36) |>
-    inner_join(dat_screen_rcc, by=c('participant_id'))
+  dat_survey_screen_q <- dat_screen_q |> 
+    inner_join(dat_survey, by=c('participant_id'))
+  dat_survey_screen_rcc <- dat_screen_rcc |> 
+    inner_join(dat_survey |> select(-sq36), by=c('participant_id'))
   
   dat <- bind_rows(dat_survey_screen_q, dat_survey_screen_rcc)
   
@@ -249,10 +339,33 @@ load_data_analysis <- function(rcc_rand_path,
   }
   setnames(dat, old=var_name_mapping$q_num, new=var_name_mapping$var_name)
   
-  var_name_no_mapping <- read_xlsx(var_name_mapping_path, sheet="no_mapping")
+  id_rand_screen_vars <- c("participant_id",
+                           "emailaddress",
+                           "screen",
+                           "cageaid",
+                           "Randomization_complete",
+                           "group",
+                           "withdraw",
+                           "age",
+                           "sex",
+                           "eth",
+                           "race_1",
+                           "race_2",
+                           "race_3",
+                           "race_4",
+                           "race_5",
+                           "race_6",
+                           "race_99",
+                           "race_mult")
+  pdf_engagement_cols <- str_c(str_c("w", 1:8), "complete", sep="_")
+  app_engagement_col_prefixes <- c("days_active", 
+                                   "user_messages", 
+                                   "stories", 
+                                   "tools", 
+                                   "moods")
   
-  dat |> select(all_of(var_name_mapping$var_name), 
-                all_of(var_name_no_mapping$var_name),
-                starts_with("days_active_w"),
-                contains("_complete"))
+  dat |> select(all_of(id_rand_screen_vars),
+                all_of(var_name_mapping$var_name), 
+                all_of(pdf_engagement_cols),
+                starts_with(app_engagement_col_prefixes))
 }

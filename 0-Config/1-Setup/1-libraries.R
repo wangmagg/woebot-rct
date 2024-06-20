@@ -11,6 +11,7 @@ suppressPackageStartupMessages(library(pbapply))
 suppressPackageStartupMessages(library(corrplot))
 suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(ggpubr))
+suppressPackageStartupMessages(library(smd))
 
 conflict_prefer("filter", "dplyr", quiet=TRUE)
 conflict_prefer("select", "dplyr", quiet=TRUE)

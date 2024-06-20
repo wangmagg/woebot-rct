@@ -21,14 +21,14 @@ for (analysis_type in analysis_types) {
       subset_per_protocol()
   }
   
-  # Get descriptive summaries
+  # Get CSQ descriptive summaries
   dat_descriptive_retained <- dat_descriptive |> filter(retained_eot == 1)
   get_descriptive_summary(dat_descriptive_retained |> filter(group == 1),
-                          vars = c('eot_csq_grp1', str_c('eot_csq_grp1', 1:8, sep='_')),
+                          vars = c('eot_csq', str_c('eot_csq', 1:8, sep='_')),
                           save_prefix = 'csq_grp1_eot-retained',
                           save_dir = save_dir)
   get_descriptive_summary(dat_descriptive_retained |> filter(group == 2),
-                          vars = c('eot_csq_grp2', str_c('eot_csq_grp2', 1:8, sep='_')),
+                          vars = c('eot_csq', str_c('eot_csq', 1:8, sep='_')),
                           save_prefix = 'csq_grp2_eot-retained',
                           save_dir = save_dir)
   get_descriptive_summary(dat_descriptive_retained |> filter(group == 1),
@@ -40,16 +40,12 @@ for (analysis_type in analysis_types) {
                           save_prefix = 'eot_urpi_eot-retained',
                           save_dir = save_dir)
   
-  # Get correlations in treated group (W-SUDS)
+  # Get correlations between acceptability/feasibility variables and past30-day substance use 
+  # in treated group (WSUDS)
   dat <- dat_outcome_regression |>
     filter(retained_eot == 1) |>
-    mutate(eot_csq = 
-             case_when(
-               group == 1 ~ eot_csq_grp1,
-               group == 2 ~ eot_csq_grp2),
-           group = as.factor(group)) |>
-    mutate_at(c("group"), ~relevel(.x, ref=2)) |>
-    select(-eot_csq_grp1, -eot_csq_grp2)
+    mutate(group = as.factor(group)) |>
+    mutate_at(c("group"), ~relevel(.x, ref=2))
   
   dat_grp1 <- dat |> filter(group == 1)
   grp1_vars <- c('eot_csq', 
@@ -67,7 +63,8 @@ for (analysis_type in analysis_types) {
   }
   grp1_vars_cor <- grp1_vars_cor |> mutate(group = 1)
   
-  # Get correlations in control group (Psychoeducation)
+  # Get correlations between acceptability/feasibility variables and past30-day substance use 
+  # in control group (Psychoeducation)
   dat_grp2 <- dat |> filter(group == 2)
   grp2_vars <- c('eot_csq', 'eot_urpi_a', 'eot_urpi_f')
   

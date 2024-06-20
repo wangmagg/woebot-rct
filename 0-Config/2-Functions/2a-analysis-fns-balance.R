@@ -1,491 +1,854 @@
-get_group_balance <- function(dat_input, grouping_var) {
-  group_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = n())
-}
+### Functions for constructing balance table
 
-get_age_balance <- function(dat_input, grouping_var) {
-  age_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(age_mean = mean(age), 
-              age_sd = sd(age),
-              age_min = min(age),
-              age_max = max(age)) |>
-    ungroup()
-}
-
-get_sex_balance <- function(dat_input, grouping_var) {
-  dat_input |> 
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_f = sum(sex == 1), p_f = mean(sex == 1),
-              n_m = sum(sex == 2), p_m = mean(sex == 2),
-              n_pna = sum(sex == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_gender_balance <- function(dat_input, grouping_var) {
-  gender_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_m = sum(gender == 1, na.rm=TRUE), p_m = n_m / n(),
-              n_w = sum(gender == 2, na.rm=TRUE), p_w = n_w / n(),
-              n_b = sum(gender == 4, na.rm=TRUE), p_b = n_b / n(),
-              n_e = sum(gender == 3 | gender == 5 | gender == 6, na.rm=TRUE), p_e = n_e / n(),
-              n_pna = sum(gender == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_orient_balance <- function(dat_input, grouping_var) {
-  orient_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_h = sum(orient == 1, na.rm=TRUE), p_h = n_h / n(),
-              n_gl = sum(orient == 2, na.rm=TRUE), p_gl = n_gl / n(),
-              n_b = sum(orient == 3, na.rm=TRUE), p_b = n_b / n(),
-              n_q = sum(orient == 4, na.rm=TRUE), p_q = n_q / n(),
-              n_p = sum(orient == 5, na.rm=TRUE), p_p = n_p / n(),
-              n_a = sum(orient == 6, na.rm=TRUE), p_a = n_a / n(),
-              n_e = sum(orient == 7, na.rm=TRUE), p_e = n_e / n(),
-              n_d = sum(orient == 8, na.rm=TRUE), p_d = n_d / n(),
-              n_pna = sum(orient == 99, na.rm=TRUE), p_pna = n_pna / n()
-    )
-}
-
-get_eth_balance <- function(dat_input, grouping_var) {
-  eth_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_h = sum(eth == 1, na.rm=TRUE), p_h = n_h / n(),
-              n_nh = sum(eth == 0, na.rm=TRUE), p_nh = n_nh / n(),
-              n_pna = sum(eth == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_race_balance <- function(dat_input, grouping_var) {
-  race_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_w = sum(race_5, na.rm=TRUE), p_w = n_w / n(),
-              n_b = sum(race_3, na.rm=TRUE), p_b = n_b / n(),
-              n_aa = sum(race_2, na.rm=TRUE), p_aa = n_aa / n(),
-              n_ai = sum(race_1, na.rm=TRUE), p_ai = n_ai / n(),
-              n_mult = sum(race_mult, na.rm=TRUE), p_mult = n_mult / n(),
-              n_o = sum(race_6, na.rm=TRUE), p_o = n_o / n(),
-              n_pna = sum(race_99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_marital_balance <- function(dat_input, grouping_var) {
-  marital_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_mcp = sum(marital == 1, na.rm=TRUE), p_mcp = n_mcp / n(),
-              n_dsw = sum(marital == 2 | marital == 3, na.rm=TRUE), p_dsw = n_dsw / n(),
-              n_ns = sum(marital == 4, na.rm=TRUE), p_ns = n_ns / n(),
-              n_pna = sum(marital == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_educ_balance <- function(dat_input, grouping_var) {
-  educ_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_hs = sum(educ == 1 | educ == 2 | educ == 3, na.rm=TRUE), p_hs = n_hs / n(),
-              n_ct = sum(educ == 4, na.rm=TRUE), p_ct = n_ct / n(),
-              n_c = sum(educ == 5, na.rm=TRUE), p_c = n_c / n(),
-              n_g = sum(educ == 6, na.rm=TRUE), p_g = n_g / n(),
-              n_pna = sum(educ == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_empl_balance <- function(dat_input, grouping_var) {
-  empl_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_e = sum(empl == 2 | empl == 3, na.rm=TRUE), p_e = n_e / n(),
-              n_u = sum(empl == 1 | empl == 4 | empl == 5 | empl == 6 | empl == 7 | empl == 8, na.rm=TRUE), p_u = n_u / n(),
-              n_pna = sum(empl == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_disab_balance <- function(dat_input, grouping_var) {
-  dis_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_d = sum(disab == 1, na.rm=TRUE), p_d = n_d / n(),
-              n_nd = sum(disab == 0, na.rm=TRUE), p_nd = n_nd / n(),
-              n_pna = sum(disab == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_insur_balance <- function(dat_input, grouping_var) {
-  insur_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_p = sum(insur == 1, na.rm=TRUE), p_p = n_p / n(),
-              n_m = sum(insur == 2 | insur == 3, na.rm=TRUE), p_m = n_m / n(),
-              n_t = sum(insur == 4, na.rm=TRUE), p_t = n_t / n(),
-              n_v = sum(insur == 5, na.rm=TRUE), p_v = n_v / n(),
-              n_i = sum(insur == 6, na.rm=TRUE), p_i = n_i / n(),
-              n_d = sum(insur == 7, na.rm=TRUE), p_d = n_d / n(),
-              n_pna = sum(insur == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_ther_balance <- function(dat_input, grouping_var) {
-  ther_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_nev = sum(ther_status == 0, na.rm=TRUE), p_nev = n_nev / n(),
-              n_for = sum(ther_status == 1, na.rm=TRUE), p_for = n_for / n(),
-              n_cur = sum(ther_status == 2, na.rm=TRUE), p_cur = n_cur / n())
-}
-
-get_trt_balance <- function(dat_input, grouping_var) {
-  trt_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_tot = sum((trt_1 + trt_2 + trt_3 + trt_4 + trt_5 + trt_7) > 0, na.rm=TRUE), p_tot = n_tot / n(),
-              n_sh = sum(trt_1 == 1 & !is.na(trt_sub) & (trt_sub > 0), na.rm=TRUE), p_sh = n_sh / n(),
-              n_op = sum(trt_2 == 1 & !is.na(trt_sub) & (trt_sub > 0), na.rm=TRUE), p_op = n_op / n(),
-              n_ir = sum(trt_3 == 1| trt_4 ==1 & !is.na(trt_sub) & (trt_sub > 0), na.rm=TRUE), p_ir = n_ir / n(),
-              n_pna = sum(trt_99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_med_balance <- function(dat_input, grouping_var) {
-  med_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_med = sum(med == 1, na.rm=TRUE), p_med = n_med / n(),
-              n_pna = sum(med == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_psych_med_balance <- function(dat_input, grouping_var) {
-  psych_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_med = sum(psych_med == 1, na.rm=TRUE), p_med = n_med / n(),
-              n_nmed = sum(psych_med == 0, na.rm=TRUE), p_nmed = n_nmed / n(),
-              n_pna = sum(psych_med == 99, na.rm=TRUE), p_pna = n_pna / n())
-}
-
-get_mh_balance <- function(dat_input, grouping_var, mult_inclusive=TRUE) {
-  if (mult_inclusive) {
+#' Helper function for getting balance info for continuous variables
+#' 
+#' @param dat_input Data
+#' @param var_name Name of variable to get balance info for
+#' @param grouping_var Name of variable that defines groups
+#' @param mod_sev_thresh If not NULL, threshold defining moderate/severe value of the variable
+#' @returns Dataframe with balance info
+.get_contin_var_bal_df <- function(dat_input, var_name, grouping_var, mod_sev_thresh=NULL) {
+  if (length(var_name) == 1) {
+    if (!is.null(mod_sev_thresh)) {
+      dat_input |>
+        group_by(across(all_of(grouping_var))) |>
+        summarize(n = sum(!is.na(!!sym(var_name))),
+                  p = n / n(),
+                  mean = mean(!!sym(var_name), na.rm=TRUE), 
+                  sd = sd(!!sym(var_name), na.rm=TRUE),
+                  min = min(!!sym(var_name), na.rm=TRUE),
+                  max = max(!!sym(var_name), na.rm=TRUE),
+                  n_modsev = sum(!!sym(var_name) >= mod_sev_thresh, na.rm=TRUE),
+                  p_modsev = n_modsev / n())
+    } 
     dat_input |>
       group_by(across(all_of(grouping_var))) |>
-      mutate(mh_mult = rowSums(pick(mh_1, mh_2, mh_3, mh_4, mh_5, mh_6, mh_7, mh_8, mh_9, mh_10, mh_11, mh_12), na.rm=TRUE) > 1,
-             mh_other = rowSums(pick(mh_1, mh_2, mh_6, mh_7, mh_8, mh_10), na.rm=TRUE) > 0) |>
-      summarize(n_nh = sum(mh_12 == 1), p_nh = n_nh / n(),
-                n_ud = sum(mh_4 == 1), p_ud = n_ud / n(), 
-                n_bp = sum(mh_3 == 1), p_bp = n_bp / n(),
-                n_ad = sum(mh_5 == 1), p_ad = n_ad / n(),
-                n_sud = sum(mh_9 == 1), p_sud = n_sud / n(),
-                n_o = sum(mh_other), p_o = n_o / n(),
-                n_mult = sum(mh_mult), p_mult = n_mult / n(),
-                n_pna = sum(mh_99 == 1, na.rm=TRUE), p_pna = n_pna / n())
+      summarize(n = sum(!is.na(!!sym(var_name))),
+                p = n / n(),
+                mean = mean(!!sym(var_name), na.rm=TRUE), 
+                sd = sd(!!sym(var_name), na.rm=TRUE),
+                min = min(!!sym(var_name), na.rm=TRUE),
+                max = max(!!sym(var_name), na.rm=TRUE)) |>
+      ungroup()
   } else {
     dat_input |>
       group_by(across(all_of(grouping_var))) |>
-      mutate(mh_mult = rowSums(pick(mh_1, mh_2, mh_3, mh_4, mh_5, mh_6, mh_7, mh_8, mh_9, mh_10, mh_11, mh_12), na.rm=TRUE) > 1,
-             mh_other = rowSums(pick(mh_1, mh_2, mh_6, mh_7, mh_8, mh_10), na.rm=TRUE) > 0) |>
-      summarize(n_nh = sum(mh_12 == 1 & !mh_mult, na.rm=TRUE), p_nh = n_nh / n(),
-                n_ud = sum((mh_4 == 1 | mh_11 == 1) & !mh_mult, na.rm=TRUE), p_ud = n_ud / n(), # one response of 11 was recoded to 4
-                n_bp = sum(mh_3 == 1 & !mh_mult, na.rm=TRUE), p_bp = n_bp / n(),
-                n_ad = sum(mh_5 == 1 & !mh_mult, na.rm=TRUE), p_ad = n_ad / n(),
-                n_sud = sum(mh_9 == 1 & !mh_mult, na.rm=TRUE), p_sud = n_sud / n(),
-                n_o = sum(mh_other & !mh_mult), p_o = n_o / n(),
-                n_mult = sum(mh_mult), p_mult = n_mult / n(),
-                n_pna = sum(mh_99 == 1 & !mh_mult, na.rm=TRUE), p_pna = n_pna / n())
+      summarize(across(all_of(var_name),
+                       .fns = list(n = ~sum(!is.na(.x)),
+                                   p = ~sum(!is.na(.x)) / n(),
+                                   mean = ~mean(.x, na.rm=TRUE), 
+                                   sd = ~sd(.x, na.rm=TRUE),
+                                   min = ~min(.x, na.rm=TRUE),
+                                   max = ~max(.x, na.rm=TRUE)),
+                       .names = '{.fn}_{.col}'))
   }
 }
 
-get_phq_balance <- function(dat_input, grouping_var) {
-  phq_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(phq)),
-              p = n / n(),
-              phq_mean = mean(phq, na.rm=TRUE),
-              phq_sd = sd(phq, na.rm=TRUE),
-              phq_min = min(phq, na.rm=TRUE),
-              phq_max = max(phq, na.rm=TRUE),
-              n_modsev = sum(phq >= 10, na.rm=TRUE),
-              p_modsev = n_modsev / n())
+#' Helper function for getting balance info for categorical variables
+#' 
+#' @param dat_input Data
+#' @param var_name Name of variable to get balance info for
+#' @param grouping_var Name of variable that defines groups
+#' @returns Dataframe with balance info
+.get_factor_var_bal_df <- function(dat_input, var_name, grouping_var) {
+  if (length(var_name) == 1) {
+    dat_input |> 
+      group_by(across(all_of(grouping_var)), !!sym(var_name)) |>
+      summarize(n = n(), .groups="drop_last") |>
+      mutate(p = n / sum(n))
+  } else {
+    dat_input |>
+      group_by(across(all_of(grouping_var))) |>
+      summarize(across(all_of(var_name),
+                       .fns = list(n=~sum(.x, na.rm=TRUE), p=~sum(.x, na.rm=TRUE) / n()),
+                       .names = '{.fn}_{.col}'))
+  }
 }
 
-get_gad_balance <- function(dat_input, grouping_var) {
-  gad_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(gad)),
-              p = n / n(),
-              gad_mean = mean(gad, na.rm=TRUE),
-              gad_sd = sd(gad, na.rm=TRUE),
-              gad_min = min(gad, na.rm=TRUE),
-              gad_max = max(gad, na.rm=TRUE),
-              n_modsev = sum(gad >= 10, na.rm=TRUE),
-              p_modsev = n_modsev / n())
+#' Helper function for getting standardized mean difference across groups
+#' 
+#' @param dat_input Data
+#' @param var_name Name of variable to get balance info for
+#' @param grouping_var Name of variable that defines groups
+#' @returns Dataframe with SMD
+.get_smd_df <- function(dat_input, var_name, grouping_var) {
+  
+  # Drop columns if any of the groups contain all missing values
+  keep_cols <- dat_input |>
+    group_by(!!sym(grouping_var)) |>
+    summarize(across(everything(), ~all(is.na(.)))) |>
+    summarize(across(-!!sym(grouping_var), ~sum(.))) |>
+    select(where(~. == 0)) |>
+    colnames()
+  dat_input <- dat_input |> select(!!sym(grouping_var), all_of(keep_cols))
+  
+  # Compute standardized mean difference
+  if (length(var_name) == 1) {
+    dat_input |> 
+      summarize(smd = smd(!!sym(var_name), g=!!sym(grouping_var), na.rm=TRUE)$estimate) |>
+      mutate(var = var_name)
+  } else {
+    dat_input |>
+      select(!!sym(grouping_var), any_of(var_name)) |>
+      summarize(across(-!!sym(grouping_var),
+                       ~smd(.x, g=!!sym(grouping_var), na.rm=TRUE)$estimate,
+                       .names='smd_{.col}')
+      ) |>
+      pivot_longer(starts_with('smd'),
+                   names_prefix='smd_',
+                   names_to='var',
+                   values_to='smd') |>
+      select(var, smd)
+  }
 }
 
-get_sps_balance <- function(dat_input, grouping_var) {
-  sps_bal <- dat_input |> 
+#' Get number of individuals in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+get_group_balance <- function(dat_input, grouping_var) {
+  bal_df <- dat_input |>
     group_by(across(all_of(grouping_var))) |>
-    summarize(n =sum(!is.na(sps)),
-              p = n / n(),
-              n_sps_6_10 = sum(sps >= 6 & sps <= 10, na.rm=TRUE),
-              p_sps_6_10 = n_sps_6_10 / n(),
-              n_sps_11_15 = sum(sps >= 11 & sps <= 15, na.rm=TRUE),
-              p_sps_11_15 = n_sps_11_15 / n(),
-              n_sps_16_20 = sum(sps >= 16 & sps <= 20, na.rm=TRUE),
-              p_sps_16_20 = n_sps_16_20 / n(),
-              n_sps_21_25 = sum(sps >= 21 & sps <= 25, na.rm=TRUE),
-              p_sps_21_25 = n_sps_21_25 / n(),
-              n_sps_26_30 = sum(sps >= 26 & sps <= 30, na.rm=TRUE),
-              p_sps_26_30 = n_sps_26_30 / n()
-    ) |>
-    pivot_longer(
-      -all_of(grouping_var),
-      names_to = 'metric',
-      values_to = 'value'
+    summarize(n = n())
+  return (list('bal' = bal_df,
+               'smd' = NULL))
+}
+
+#' Get age summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_age_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('age', grouping_var)
+  
+  if (get_smd) {
+    smd_df <-  dat_input |> .get_smd_df('age', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
+}
+
+#' Get sex summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_sex_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      sex = case_when(
+        sex == 1 ~ 'f',
+        sex == 2 ~ 'm',
+        sex == 99 ~ 'pna'
+      )
     )
+  bal_df <- dat_input |> .get_factor_var_bal_df('sex', grouping_var)
+  
+  if (get_smd) {
+    smd_df <-  dat_input |> .get_smd_df('sex', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
 }
 
-get_pst_sub_balance <- function(dat_input, grouping_var) {
-  dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    mutate_at(vars(starts_with('psub_')), list(~if_else(is.na(.), 0, .))) |>
-    mutate(psub_1_main = (psub_1 == 1 | psub_1 == 3 | psub_1 == 7 | psub_1 == 10 | psub_1 == 11),
-           psub_2_main = (psub_2 == 1 | psub_2 == 3 | psub_2 == 7 | psub_2 == 10 | psub_2 == 11),
-           psub_3_main = (psub_3 == 1 | psub_3 == 3 | psub_3 == 7 | psub_3 == 10 | psub_3 == 11),
-           psub_1_oth = (psub_1 == 2 | psub_1 == 4 | psub_1 == 5 | psub_1 == 6 | psub_1 == 8 | psub_1 == 9 | psub_1 == 12),
-           psub_2_oth = (psub_2 == 2 | psub_2 == 4 | psub_2 == 5 | psub_2 == 6 | psub_2 == 8 | psub_2 == 9 | psub_2 == 12),
-           psub_3_oth = (psub_3 == 2 | psub_3 == 4 | psub_3 == 5 | psub_3 == 6 | psub_3 == 8 | psub_3 == 9 | psub_3 == 12)) |>
-    summarize(n_alc = sum(psub_1 == 1 | psub_2 == 1 | psub_3 == 1, na.rm=TRUE),
-              p_alc = n_alc / n(),
-              n_can = sum(psub_1 == 7 | psub_2 == 7 | psub_3 == 7, na.rm=TRUE),
-              p_can = n_can / n(),
-              n_sti = sum(psub_1 == 10 | psub_2 == 10 | psub_3 == 10, na.rm=TRUE),
-              p_sti = n_sti / n(),
-              n_coc = sum(psub_1 == 3 | psub_2 == 3 | psub_3 == 3, na.rm=TRUE),
-              p_coc = n_coc / n(),
-              n_tob = sum(psub_1 == 11 | psub_2 == 11 | psub_3 == 11, na.rm=TRUE),
-              p_tob = n_tob / n(),
-              n_oth_any = sum(psub_1_oth | psub_2_oth | psub_3_oth, na.rm=TRUE), p_oth_any = n_oth_any / n(),
-              n_oth_all = sum(psub_1_oth & psub_2_oth & psub_3_oth, na.rm=TRUE),
-              n_main_any = sum((psub_1_main | psub_2_main | psub_3_main), na.rm=TRUE),
-              n_main_all = sum(psub_1_main & psub_2_main & psub_3_main, na.rm=TRUE),
-              n_pna_all = sum(psub_1 == 99 & psub_2 == 99 & psub_3 == 99, na.rm=TRUE),
+#' Get gender summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_gender_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      gender = case_when(
+        gender == 1 ~ 'm',
+        gender == 2 ~ 'w',
+        gender == 4 ~ 'b',
+        gender == 3 | gender == 5 | gender == 6 ~ 'e',
+        gender == 99 ~ 'pna'
+      )
     )
+  bal_df <- dat_input |> .get_factor_var_bal_df('gender', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('gender', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
 }
 
-get_pri_sub_balance <- function(dat_input, grouping_var) {
-  pri_sub_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_alc = sum(psub_1 == 1, na.rm=TRUE),
-              p_alc = n_alc / n(),
-              n_can = sum(psub_1 == 7, na.rm=TRUE),
-              p_can = n_can / n(),
-              n_stim = sum(psub_1 == 10, na.rm=TRUE),
-              p_stim = n_stim / n(),
-              n_coc = sum(psub_1 == 3, na.rm=TRUE),
-              p_coc = n_coc / n(),
-              n_tob = sum(psub_1 == 11, na.rm=TRUE),
-              p_tob = n_tob / n())
+#' Get sexual orientation summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_orient_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      orient = case_when(
+        orient == 1 ~ 'h',
+        orient == 2 ~ 'gl',
+        orient == 3 ~ 'b',
+        orient == 4 ~ 'q',
+        orient == 5 ~ 'p',
+        orient == 6 ~ 'a',
+        orient == 7 ~ 'e',
+        orient == 8 ~ 'd',
+        orient == 99 ~ 'pna'
+      )
+    )
+  bal_df <- dat_input |> .get_factor_var_bal_df('orient', grouping_var)
+  
+  if (get_smd) {
+    smd_df <-  dat_input |> .get_smd_df('orient', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
+}
+
+#' Get ethnicity summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_eth_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      eth = case_when(
+        eth == 1 ~ 'h',
+        eth == 0 ~ 'nh',
+        eth == 99 ~ 'pna'
+      )
+    )
+  bal_df <- dat_input |> .get_factor_var_bal_df('eth', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('eth', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
+}
+
+#' Get race summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_race_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      race = case_when(
+        race_1 == 1 ~ 'ai',
+        race_2 == 1 ~ 'aa',
+        race_3 == 1 ~ 'b',
+        race_5 == 1 ~ 'w',
+        race_6 == 1 ~ 'o',
+        race_mult == 1 ~ 'mult',
+        race_99 == 1 ~ 'pna'
+      )
+    )
+  bal_df <- dat_input |> .get_factor_var_bal_df('race', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('race', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get marital status summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_marital_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      marital = case_when(
+        marital == 1 ~ 'mcp',
+        marital == 2 | marital == 3 ~ 'dsw',
+        marital == 4 ~ 'ns',
+        marital == 99 ~ 'pna'
+      )
+    )
+  
+  bal_df <- dat_input |> .get_factor_var_bal_df('marital', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('marital', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
+}
+
+#' Get education summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_educ_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      educ = case_when(
+        (educ == 1 | educ == 2 | educ == 3) ~ 'hs',
+        educ == 4 ~ 'ct',
+        educ == 5 ~ 'c',
+        educ == 6 ~ 'g',
+        educ == 99 ~ 'pna'
+      )
+    )
+  bal_df <- dat_input |> .get_factor_var_bal_df('educ', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('educ', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get employment status summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_empl_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      empl = case_when(
+        empl == 2 | empl == 3 ~ 'e',
+        empl == 1 | empl == 4 | empl == 5 | empl == 6 | empl == 7 | empl == 8 ~ 'u',
+        empl == 99 ~ 'pna'
+      )
+    )
+  
+  bal_df <- dat_input |> .get_factor_var_bal_df('empl', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('empl', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
+}
+
+#' Get disability status summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_disab_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      disab = case_when(
+        disab == 1 ~ 'd',
+        disab == 0 ~ 'nd',
+        disab == 99 ~ 'pna'
+      )
+    )
+  
+  bal_df <- dat_input |> .get_factor_var_bal_df('disab', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('disab', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
+}
+
+#' Get insurance type summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_insur_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      insur = case_when(
+        insur == 1 ~ 'p',
+        insur == 2 | insur == 3 ~ 'm',
+        insur == 4 ~ 't',
+        insur == 5 ~ 'v',
+        insur == 6 ~ 'i',
+        insur == 7 ~ 'd',
+        insur == 99 ~ 'pna'
+      )
+    )
+  
+  bal_df <- dat_input |> .get_factor_var_bal_df('insur', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('insur', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
   
 }
 
-get_sec_sub_balance <- function(dat_input, grouping_var) {
-  sec_sub_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_alc = sum(psub_2 == 1, na.rm=TRUE),
-              p_alc = n_alc / n(),
-              n_can = sum(psub_2 == 7, na.rm=TRUE),
-              p_can = n_can / n(),
-              n_stim = sum(psub_2 == 10, na.rm=TRUE),
-              p_stim = n_stim / n(),
-              n_coc = sum(psub_2 == 3, na.rm=TRUE),
-              p_coc = n_coc / n(),
-              n_tob = sum(psub_2 == 11, na.rm=TRUE),
-              p_tob = n_tob / n())
+#' Get therapy status summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_ther_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      ther_status = case_when(
+        ther_status == 0 ~ 'nev',
+        ther_status == 1 ~ 'for',
+        ther_status == 2 ~ 'cur'
+      )
+    )
+  bal_df <- dat_input |> .get_factor_var_bal_df('ther_status', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('ther_status', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  
+  return (list('bal' = bal_df))
 }
 
-get_ter_sub_balance <- function(dat_input, grouping_var) {
-  ter_sub_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_alc = sum(psub_3 == 1, na.rm=TRUE),
-              p_alc = n_alc / n(),
-              n_can = sum(psub_3 == 7, na.rm=TRUE),
-              p_can = n_can / n(),
-              n_stim = sum(psub_3 == 10, na.rm=TRUE),
-              p_stim = n_stim / n(),
-              n_coc = sum(psub_3 == 3, na.rm=TRUE),
-              p_coc = n_coc / n(),
-              n_tob = sum(psub_3 == 11, na.rm=TRUE),
-              p_tob = n_tob / n())
+#' Get past treatment summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_trt_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      trt_sh = (trt_1 == 1) & !is.na(trt_sub) & (trt_sub > 0),
+      trt_op = (trt_2 == 1) & !is.na(trt_sub) & (trt_sub > 0),
+      trt_ir = (trt_3 == 1 | trt_4 ==1) & !is.na(trt_sub) & (trt_sub > 0),
+      trt_any = !is.na(trt_sub) & (trt_sub > 0),
+      trt_pna = trt_99 == 1
+    )
+  
+  var_names <- c('trt_sh', 'trt_op', 'trt_ir', 'trt_any', 'trt_pna')
+  bal_df <- dat_input |> .get_factor_var_bal_df(var_names, grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df(var_names, grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
 }
 
-get_dast_balance <- function(dat_input, grouping_var) {
-  dast_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(dast)),
-              dast_mean = mean(dast, na.rm=TRUE),
-              dast_sd = sd(dast, na.rm=TRUE),
-              dast_min = min(dast, na.rm=TRUE),
-              dast_max = max(dast, na.rm=TRUE),
-              n_modsev = sum(dast >= 3, na.rm=TRUE),
-              p_modsev = n_modsev / n())
+#' Get substance use medication summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_med_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(med = as.factor(med))
+  bal_df <- dat_input |> .get_factor_var_bal_df('med', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('med', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
 }
 
-get_sipad_balance <- function(dat_input, grouping_var) {
-  sipad_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(sipad)),
-              sipad_mean = mean(sipad, na.rm=TRUE),
-              sipad_sd = sd(sipad, na.rm=TRUE),
-              sipad_min = min(sipad, na.rm=TRUE),
-              sipad_max = max(sipad, na.rm=TRUE))
+#' Get psychiatric medication summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_psych_med_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(psych_med = factor(psych_med))
+  bal_df <- dat_input |> .get_factor_var_bal_df('psych_med', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('psych_med', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
 }
 
-get_cageaid_balance <- function(dat_input, grouping_var) {
-  cageaid_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(sipad)),
-              cageaid_mean = mean(cageaid, na.rm=TRUE),
-              cageaid_sd = sd(cageaid, na.rm=TRUE),
-              cageaid_min = min(cageaid, na.rm=TRUE),
-              cageaid_max = max(cageaid, na.rm=TRUE))
+#' Get mental health diagnosis summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_mh_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(mh_mult = rowSums(pick(mh_1, mh_2, mh_3, mh_4, mh_5, mh_6, mh_7, mh_8, mh_9, mh_10, mh_11, mh_12), na.rm=TRUE) > 1,
+           mh_other = rowSums(pick(mh_1, mh_2, mh_6, mh_7, mh_8, mh_10), na.rm=TRUE) > 0,
+           mh_nh = as.logical(mh_12),
+           mh_ud = mh_4 | mh_11,
+           mh_bp = as.logical(mh_3),
+           mh_ad = as.logical(mh_5),
+           mh_sud = as.logical(mh_9),
+           mh_pna = as.logical(mh_99))
+  
+  var_names <- c('mh_nh', 'mh_ud', 'mh_bp', 'mh_ad', 'mh_sud', 'mh_mult', 'mh_other', 'mh_pna')
+  bal_df <- dat_input |> .get_factor_var_bal_df(var_names, grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df(var_names, grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
 }
 
-get_bscq_balance <- function(dat_input, grouping_var) {
-  bscq_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(bscq)),
-              bscq_mean = mean(bscq, na.rm=TRUE),
-              bscq_sd = sd(bscq, na.rm=TRUE),
-              bscq_min = min(bscq, na.rm=TRUE),
-              bscq_max = max(bscq, na.rm=TRUE))
+#' Get PHQ summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_phq_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('phq', grouping_var, mod_sev_thresh=10)
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('phq', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
 }
 
-get_crave_balance <- function(dat_input, grouping_var) {
-  crave_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(crave)),
-              crave_mean = mean(crave, na.rm=TRUE),
-              crave_sd = sd(crave, na.rm=TRUE),
-              crave_min = min(crave, na.rm=TRUE),
-              crave_max = max(crave, na.rm=TRUE))
+#' Get GAD summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_gad_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('gad', grouping_var, mod_sev_thresh=10)
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('gad', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
 }
 
-get_p30_per_sub_balance <- function(dat_input, grouping_var) {
-  p30_per_sub_bal <- dat_input |>
+#' Get SPS summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_sps_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+      sps = case_when(
+        sps >= 6 & sps <= 10 ~ '6-10',
+        sps >= 11 & sps <= 15 ~ '11-15',
+        sps >= 16 & sps <= 20 ~ '16-20',
+        sps >= 21 & sps <= 25 ~ '21-25',
+        sps >= 26 & sps <= 30 ~ '26-30'
+      )
+    )
+  bal_df <- dat_input |> .get_factor_var_bal_df('sps', grouping_var)
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('sps', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get primary, secondary, tertiary substance summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_pst_sub_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(
+         psub_1_oth = (psub_1 == 2 | psub_1 == 4 | psub_1 == 5 | psub_1 == 6 | psub_1 == 8 | psub_1 == 9 | psub_1 == 12),
+         psub_2_oth = (psub_2 == 2 | psub_2 == 4 | psub_2 == 5 | psub_2 == 6 | psub_2 == 8 | psub_2 == 9 | psub_2 == 12),
+         psub_3_oth = (psub_3 == 2 | psub_3 == 4 | psub_3 == 5 | psub_3 == 6 | psub_3 == 8 | psub_3 == 9 | psub_3 == 12)
+    ) |>
+    mutate(
+      pst_alc = psub_1 == 1 | psub_2 == 1 | psub_3 == 1,
+      pst_can = psub_1 == 7 | psub_2 == 7 | psub_3 == 7,
+      pst_sti = psub_1 == 10 | psub_2 == 10 | psub_3 == 10,
+      pst_coc = psub_1 == 3 | psub_2 == 3 | psub_3 == 3,
+      pst_tob = psub_1 == 11 | psub_2 == 11 | psub_3 == 11,
+      pst_oth_any = psub_1_oth | psub_2_oth | psub_3_oth,
+    )
+  
+  var_names <- c('pst_alc', 'pst_can', 'pst_sti', 'pst_coc', 'pst_tob', 'pst_oth_any')
+  
+  bal_df <- dat_input |> .get_factor_var_bal_df(var_names, grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df(var_names, grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get DAST summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_dast_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('dast', grouping_var, mod_sev_thresh=3)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('dast', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get SIPAD summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_sipad_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('sipad', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('sipad', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get CAGEAID summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_cageaid_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('cageaid', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('cageaid', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get BSCQ summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_bscq_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('bscq', grouping_var, mod_sev_thresh=10)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('bscq', grouping_var)
+    
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+#' Get cravings summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_crave_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('crave', grouping_var, mod_sev_thresh=10)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('crave', grouping_var)
+
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))  
+  }
+  return (list('bal' = bal_df))
+
+}
+
+#' Get past 30day substance use summary in each group,
+#' separately for each substance
+
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_p30_per_sub_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(across(starts_with("p30_"),
+                  ~case_when(.x == 99 ~ NA,
+                             TRUE ~ .x))) 
+  
+  bal_df <- dat_input |>
     group_by(across(all_of(grouping_var))) |>
     summarize(across(starts_with("p30_"),
-                     list(mean = ~mean(.x[.x != 99], na.rm=TRUE),
-                          sd = ~sd(.x[.x != 99], na.rm=TRUE),
-                          min = ~min(.x[.x != 99], na.rm=TRUE),
-                          max = ~max(.x[.x != 99], na.rm=TRUE),
-                          n_any = ~sum(.x > 0 & .x != 99, na.rm=TRUE),
-                          p_any = ~sum(.x > 0 & .x != 99, na.rm=TRUE) / n()))) |>
+                     list(mean = ~mean(.x, na.rm=TRUE),
+                          sd = ~sd(.x, na.rm=TRUE),
+                          min = ~min(.x, na.rm=TRUE),
+                          max = ~max(.x, na.rm=TRUE),
+                          nany = ~sum(.x > 0, na.rm=TRUE),
+                          pany = ~sum(.x > 0, na.rm=TRUE) / n()))) |>
     pivot_longer(
       cols = -all_of(grouping_var),
       names_to = c('substance', '.value') ,
-      names_pattern = paste0('(', 
-                             str_c('p30_', c('alc','can','coc','sti','met', 'inh', 
-                                             'sed', 'hal', 'sop', 'pop', 'tob'), collapse='|'),
-                             ')', 
-                             '(.*)', 
-                             collapse=''))
+      names_sep = '_',
+      names_prefix = 'p30_'
+    )
+  
+  var_names <- dat_input |>
+    select(starts_with('p30_')) |>
+    colnames()
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df(var_names, grouping_var)
+    
+    return(list('bal' = bal_df,
+                'smd' = smd_df))
+  }
+  return(list('bal' = bal_df))
 }
 
-get_p30_balance <- function(dat_input, grouping_var) {
-  p30_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(p30)),
-              p30_mean = mean(p30, na.rm=TRUE),
-              p30_sd = sd(p30, na.rm=TRUE),
-              p30_min = min(p30, na.rm=TRUE),
-              p30_max = max(p30, na.rm=TRUE))
+#' Get total past30d substance use summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_p30_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('p30', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('p30', grouping_var)
+    return(list('bal' = bal_df,
+                'smd' = smd_df))
+  }
+  return(list('bal' = bal_df))
 }
 
-get_qds_balance <- function(dat_input, grouping_var) {
-  qds_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n_dpw = sum(!is.na(qds_1)),
-              days_per_week_mean = mean(qds_1, na.rm=TRUE),
-              days_per_week_sd = sd(qds_1, na.rm=TRUE),
-              days_per_week_min = min(qds_1, na.rm=TRUE),
-              days_per_week_max = max(qds_1, na.rm=TRUE),
-              n_dpd = sum(!is.na(qds_2)),
-              drinks_per_day_mean = mean(qds_2, na.rm=TRUE),
-              drinks_per_day_sd = sd(qds_2, na.rm=TRUE),
-              drinks_per_day_min = min(qds_2, na.rm=TRUE),
-              drinks_per_day_max = max(qds_2, na.rm=TRUE),
-              n_heavy = sum(!is.na(heavy)),
-              heavy_mean = mean(heavy, na.rm=TRUE),
-              heavy_sd = sd(heavy, na.rm=TRUE),
-              heavy_min = min(heavy, na.rm=TRUE),
-              heavy_max = max(heavy, na.rm=TRUE))
+#' Get QDS summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_qds_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    rename(dapw = qds_1,
+           drpd = qds_2)
+  
+  var_names <- c('dapw', 'drpd', 'heavy')
+  bal_df <- dat_input |> .get_contin_var_bal_df(var_names, grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df(var_names, grouping_var)
+    return(list('bal' = bal_df,
+                'smd' = smd_df))
+  }
+  return(list('bal' = bal_df))
 }
 
-get_taa_balance <- function(dat_input, grouping_var) {
-  taa_bal <- dat_input |>
-    group_by(across(all_of(grouping_var))) |>
-    summarize(n = sum(!is.na(taa)),
-              taa_mean = mean(taa, na.rm=TRUE),
-              taa_sd = sd(taa, na.rm=TRUE),
-              taa_min = min(taa, na.rm=TRUE),
-              taa_max = max(taa, na.rm=TRUE))
+#' Get TAA summary in each group
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param get_smd Boolean, compute SMD between groups if true
+get_taa_balance <- function(dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df('taa', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('taa', grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
 }
 
-get_balance <- function(dat_input, grouping_var, var_names, save_prefix, save_dir) {
+#' Wrapper function for getting balance table information across specified variables
+#' 
+#' @param dat_input Data
+#' @param grouping_var Name of variable that defines groups
+#' @param var_names List of variables names to get balance table info for
+#' @param save_prefix String prefix for name of file where results are saved
+#' @param save_dir Directory to save results to
+#' @param get_smd Boolean, compute SMD between groups if true
+get_balance <- function(dat_input, grouping_var, var_names, save_prefix, save_dir, get_smd=TRUE) {
   if (!file.exists(save_dir)) {
     dir.create(save_dir)
   }
-  
+  if (get_smd) {
+    all_smd <- data.frame()
+  }
   for (var_name in var_names) {
-    if (var_name == 'group') {
-      bal <- get_group_balance(dat_input, grouping_var)
-    } else if (var_name == 'age') {
-      bal <- get_age_balance(dat_input, grouping_var)
-    } else if (var_name == 'sex') {
-      bal <- get_sex_balance(dat_input, grouping_var)
-    } else if (var_name == 'gender') {
-      bal <- get_gender_balance(dat_input, grouping_var)
-    } else if (var_name == 'orient') {
-      bal <- get_orient_balance(dat_input, grouping_var)
-    } else if (var_name == 'eth') {
-      bal <- get_eth_balance(dat_input, grouping_var)
-    } else if (var_name == 'race') {
-      bal <- get_race_balance(dat_input, grouping_var)
-    } else if (var_name == 'marital') {
-      bal <- get_marital_balance(dat_input, grouping_var)
-    } else if (var_name == 'educ') {
-      bal <- get_educ_balance(dat_input, grouping_var)
-    } else if (var_name == 'empl') {
-      bal <- get_empl_balance(dat_input, grouping_var)
-    } else if (var_name == 'disab') {
-      bal <- get_disab_balance(dat_input, grouping_var)
-    } else if (var_name == 'insur') {
-      bal <- get_insur_balance(dat_input, grouping_var)
-    } else if (var_name == 'ther') {
-      bal <- get_ther_balance(dat_input, grouping_var)
-    } else if (var_name == 'trt') {
-      bal <- get_trt_balance(dat_input, grouping_var)
-    } else if (var_name == 'med') {
-      bal <- get_med_balance(dat_input, grouping_var)
-    } else if (var_name == 'psych_med') {
-      bal <- get_psych_med_balance(dat_input, grouping_var)
-    } else if (var_name == 'mh') {
-      bal <- get_mh_balance(dat_input, grouping_var)
-    } else if (var_name == 'phq') {
-      bal <- get_phq_balance(dat_input, grouping_var)
-    } else if (var_name == 'gad') {
-      bal <- get_gad_balance(dat_input, grouping_var)
-    } else if (var_name == 'sps') {
-      bal <- get_sps_balance(dat_input, grouping_var)
-    } else if (var_name == 'pst_sub') {
-      bal <- get_pst_sub_balance(dat_input, grouping_var)
-    } else if (var_name == 'pri_sub') {
-      bal <- get_pri_sub_balance(dat_input, grouping_var)
-    } else if (var_name == 'sec_sub') {
-      bal <- get_sec_sub_balance(dat_input, grouping_var)
-    } else if (var_name == 'ter_sub') {
-      bal <- get_ter_sub_balance(dat_input, grouping_var)
-    } else if (var_name == 'dast') {
-      bal <- get_dast_balance(dat_input, grouping_var)
-    } else if (var_name == 'sipad') {
-      bal <- get_sipad_balance(dat_input, grouping_var)
-    } else if (var_name == 'cageaid') {
-      bal <- get_cageaid_balance(dat_input, grouping_var)
-    } else if (var_name == 'bscq') {
-      bal <- get_bscq_balance(dat_input, grouping_var)
-    } else if (var_name == 'crave') {
-      bal <- get_crave_balance(dat_input, grouping_var)
-    } else if (var_name == 'p30_per_sub') {
-      bal <- get_p30_per_sub_balance(dat_input, grouping_var)
-    } else if (var_name == 'p30') {
-      bal <- get_p30_balance(dat_input, grouping_var)
-    } else if (var_name == 'qds') {
-      bal <- get_qds_balance(dat_input, grouping_var)
-    } else if (var_name == 'taa') {
-      bal <- get_taa_balance(dat_input, grouping_var)
+    res <- switch(
+      var_name,
+      "group" = get_group_balance(dat_input, grouping_var),
+      "age" = get_age_balance(dat_input, grouping_var, get_smd),
+      "sex" = get_sex_balance(dat_input, grouping_var, get_smd),
+      "gender" = get_gender_balance(dat_input, grouping_var, get_smd),
+      "orient" = get_orient_balance(dat_input, grouping_var, get_smd),
+      "eth" = get_eth_balance(dat_input, grouping_var, get_smd),
+      "race" = get_race_balance(dat_input, grouping_var, get_smd),
+      "marital" = get_marital_balance(dat_input, grouping_var, get_smd),
+      "educ" = get_educ_balance(dat_input, grouping_var, get_smd),
+      "empl" = get_empl_balance(dat_input, grouping_var, get_smd),
+      "disab" = get_disab_balance(dat_input, grouping_var, get_smd),
+      "insur" = get_insur_balance(dat_input, grouping_var, get_smd),
+      "ther" = get_ther_balance(dat_input, grouping_var, get_smd),
+      "trt" = get_trt_balance(dat_input, grouping_var, get_smd),
+      "med" = get_med_balance(dat_input, grouping_var, get_smd),
+      "psych_med" = get_psych_med_balance(dat_input, grouping_var, get_smd),
+      "mh" = get_mh_balance(dat_input, grouping_var, get_smd),
+      "phq" = get_phq_balance(dat_input, grouping_var, get_smd),
+      "gad" = get_gad_balance(dat_input, grouping_var, get_smd),
+      "sps" = get_sps_balance(dat_input, grouping_var, get_smd),
+      "pst_sub" = get_pst_sub_balance(dat_input, grouping_var, get_smd),
+      "dast" = get_dast_balance(dat_input, grouping_var, get_smd),
+      "sipad" = get_sipad_balance(dat_input, grouping_var, get_smd),
+      "cageaid" = get_cageaid_balance(dat_input, grouping_var, get_smd),
+      "bscq" = get_bscq_balance(dat_input, grouping_var, get_smd),
+      "crave" = get_crave_balance(dat_input, grouping_var, get_smd),
+      "p30_per_sub" = get_p30_per_sub_balance(dat_input, grouping_var, get_smd),
+      "p30" = get_p30_balance(dat_input, grouping_var, get_smd),
+      "qds" = get_qds_balance(dat_input, grouping_var, get_smd),
+      "taa" = get_taa_balance(dat_input, grouping_var, get_smd)
+    )
+    write.csv(res$bal, file.path(save_dir, str_c(save_prefix, var_name, 'balance.csv', sep='_')), row.names=FALSE)
+    if (get_smd) {
+      all_smd <- bind_rows(all_smd, res$smd)
     }
-    write.csv(bal, file.path(save_dir, str_c(save_prefix, var_name, 'balance.csv', sep='_')), row.names=FALSE)
+    
+  }
+  if (get_smd) {
+    write.csv(all_smd, file.path(save_dir, str_c('smd.csv', sep='_')))
   }
 }

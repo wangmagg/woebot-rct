@@ -18,6 +18,7 @@ dat_outcome_regression <- dat_outcome_regression |>
 
 timepts <- c('eot', 'mid', 'followup')
 
+# Make visualizations for each timepoint and each outcome variable to check linear regression assumptions hold
 for (timept in timepts) {
   outcome_vars_timept <- OUTCOME_VARS_DICT[[timept]]
   retain_var <- str_c('retained_', timept)
@@ -54,12 +55,14 @@ for (timept in timepts) {
       select(all_of(fixed_effect_vars_selected))
     mdl_lm_df <- bind_cols(mdl_lm_df, vars_df)
     
+    # Make QQ plot
     p_qq <- ggplot(mdl_lm_df, aes(sample = residuals)) +
       geom_qq() +
       geom_qq_line() +
       labs(x = 'Theoretical Quantiles', y = 'Sample Quantiles') +
       theme_bw(base_size = 14)
 
+    # Plot residuals against fitted values
     p_resid_vs_fitted <- ggplot(mdl_lm_df, aes(x = y_hat, y = residuals)) +
       geom_point() +
       labs(x = 'Fitted Values', y = 'Residuals') +
@@ -99,6 +102,7 @@ for (timept in timepts) {
         theme_bw(base_size = 14)
     }
     
+    # Arrange plots
     if (is.null(p_resid_vs_factor_vars) & is.null(p_resid_vs_numeric_vars)) {
       p_arranged <- ggarrange(p_qq, p_resid_vs_fitted, ncol = 2, labels=c("A", "B"))
     } else if (is.null(p_resid_vs_factor_vars)) {
@@ -115,27 +119,10 @@ for (timept in timepts) {
     
     p_arranged <- annotate_figure(p_arranged, top = text_grob(paste(outcome_var, timept), 
                                                 face = 'bold', size = 14))
+    
+    # Save plots
     ggsave(file.path(save_dir, timept, str_c(outcome_var, 'assumption_checks.png', sep='_')), 
            p_arranged,
            width=12, height=12)
-    
-    # weight_vars_selected <- get_variables_for_weights(dat_outcome_to_fit,
-    #                                                   fixed_effect_vars = var_candidates,
-    #                                                   retain_var = retain_var,
-    #                                                   save_dir = file.path(save_dir, timept))
-    # 
-    # weighted_res <- run_weighted_lm(dat_outcome_to_fit, fixed_effect_vars_selected,
-    #                                 retain_var, delta_outcome_var_for_fit, weight_vars_selected)
-    
-    # weighted_mdl_lm <- weighted_res$mdl
-    # weighted_mdl_lm_df <- data.frame('y_hat' = weighted_mdl_lm$fitted.values,
-    #                                  'residuals' = weighted_mdl_lm$residuals,
-    #                                  'fitted_weights'= weights(weighted_mdl_lm))
-    # p_weights_vs_resid <- ggplot(weighted_mdl_lm_df, aes(x = residuals, y = fitted_weights)) +
-    #   geom_point() +
-    #   labs(x = 'Residuals', y = 'Weights') +
-    #   theme_bw()
-    # 
-    # print(p_weights_vs_resid)
   }
 }

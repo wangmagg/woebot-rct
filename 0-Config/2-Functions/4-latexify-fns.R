@@ -1,3 +1,8 @@
+### Functions for formatting results in Latex syntax
+
+#' Get Latex for baseline variable descriptive summaries
+#' 
+#' @param descrip Dataframe with descriptive summary
 make_baseline_descrip_latex <- function(descrip, keep_vars=NULL) {
   descrip_latex <- descrip |>
     mutate(latex = sprintf("%d & %0.3g (%0.3g) & [%0.3g, %0.3g] & --- & ---",
@@ -12,6 +17,9 @@ make_baseline_descrip_latex <- function(descrip, keep_vars=NULL) {
   return(descrip_latex)
 }
 
+#' Get Latex for descriptive summaries of variables at 4-week, 8-week, 12-week timetpoints
+#' 
+#' @param descrip Dataframe with descriptive summary
 make_timept_descrip_latex <- function(descrip, keep_vars=NULL) {
   delta_descrip_fmted <- descrip |>
     select(-n) |>
@@ -33,6 +41,12 @@ make_timept_descrip_latex <- function(descrip, keep_vars=NULL) {
     select(var, all_of(keep_vars), latex)
 }
 
+#' Get Latex for treatment effect estimates
+#' 
+#' @param res_reg Dataframe with regression analysis results
+#' @param res_ttest If not NULL, dataframe with t-test results
+#' @param keep_vars List of variables to keep in the output 
+#' @param intxn Boolean flag for whether or not interaction terms were present in analysis
 make_timept_est_latex <- function(res_reg, res_ttest=NULL, keep_vars=NULL, intxn=FALSE) {
   res_reg <- res_reg |>
     mutate(latex_reg = sprintf("%.3g (%.3g; [%.3g, %.3g])",
@@ -78,10 +92,15 @@ make_timept_est_latex <- function(res_reg, res_ttest=NULL, keep_vars=NULL, intxn
     select(all_of(keep_vars), latex)
 }
 
-make_timept_within_group_latex <- function(descrip_res, ttest_res=NULL, keep_vars=NULL) {
-  if (!is.null(ttest_res)) {
+#' Get Latex for within-group effect estimates
+#' 
+#' @param res_reg Dataframe with within-group effect estimate results
+#' @param res_ttest If not NULL, dataframe with t-test results
+#' @param keep_vars List of variables to keep in the output 
+make_timept_within_group_latex <- function(descrip_res, res_ttest=NULL, keep_vars=NULL) {
+  if (!is.null(res_ttest)) {
     res <- descrip_res |>
-      left_join(ttest_res, by=c('group', 'var')) |>
+      left_join(res_ttest, by=c('group', 'var')) |>
       mutate(latex = sprintf("%d & %0.3g (%0.3g) & %0.3g & t(%d) = %0.3g, p = %0.3g",
                              n, mean, sd, cohen_d, parameter, statistic, p.value))
   } else {

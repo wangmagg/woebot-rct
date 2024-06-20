@@ -10,12 +10,12 @@ if (!dir.exists(save_dir)) {
 # Read input data files
 dat_rand_ret_base <- read_csv(file.path(DATA_OUT_DIR, 'dat_analysis_rand-ret-base.csv'), show_col_types=FALSE)
 
-# summarize weekly engagement in control group
+# Summarize weekly engagement in control group
 dat_pdf_summary <- dat_rand_ret_base |> 
   mutate(actual = rowSums(across(w1_complete:w8_complete), na.rm=TRUE)) |>
   select(participant_id, actual)
 
-# check for consistency with self-report
+# Check for consistency with self-report
 dat_pdf_self_rep_actual <- dat_rand_ret_base |>
   subset_has_eot() |>
   filter(group == 2) |>
@@ -24,7 +24,17 @@ dat_pdf_self_rep_actual <- dat_rand_ret_base |>
   mutate(discrep = actual - self_report) |>
   select(participant_id, actual, self_report, discrep)
 
-# Plot self-report and actual engagement distributions
+# Summarize number of participants who opened PDF's each week
+dat_pdf_summary_by_week <- dat_rand_ret_base |>
+  filter(group == 2) |>
+  summarize(across(w1_complete:w8_complete, 
+                   .fns = list(n = ~sum(.x, na.rm=TRUE),
+                               p = ~sum(.x, na.rm=TRUE) / n()),
+                   .names='{.fn}_{.col}'))
+write.csv(dat_pdf_summary_by_week, 
+          file.path(save_dir, 'summary_by_week.csv'), row.names=FALSE)
+
+# Summarize by number of participants who opened certain number of PDFs
 dat_pdf_self_rep_actual_long <- dat_pdf_self_rep_actual |>
   pivot_longer(cols=c(actual, self_report, discrep), 
                names_to='measure', 
@@ -45,6 +55,9 @@ dat_pdf_summary_by_measure <- dat_pdf_self_rep_actual_long |>
             sd_cnt = sd(cnt, na.rm=TRUE),
             median_cnt = median(cnt, na.rm=TRUE),
             n_atleast_4 = sum(cnt >= 4, na.rm=TRUE),
-            p_atleast_4 = n_atleast_4 / n() * 100, .groups='drop')
+            p_atleast_4 = n_atleast_4 / n(), 
+            n_any = sum(cnt > 0, na.rm=TRUE),
+            p_any = n_any / n(),
+            .groups='drop')
 write.csv(dat_pdf_summary_by_measure, 
           file.path(save_dir, 'summary_by_measure.csv'), row.names=FALSE)
