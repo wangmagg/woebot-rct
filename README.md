@@ -41,7 +41,7 @@ Statistical analyses for Phase II W-SUD trial.
 
 ### `2-Analysis/`:
 
-`0-run-analysis.sh`: bash script that executes all analyses
+- `0-run-analysis.sh`: bash script that executes all analyses
 
 **`1-Descriptives/`**
 
