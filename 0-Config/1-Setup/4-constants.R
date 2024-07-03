@@ -8,7 +8,9 @@ NON_COMPOSITE_VARS <- c("group", "race", "eth", "sex", "gender",
                         "crave", "cageaid", "heavy", 
                         "mid_crave", "mid_heavy",
                         "eot_crave", "eot_heavy",
-                        "followup_crave", "followup_heavy")
+                        "followup_crave", "followup_heavy",
+                        "taa_1", "taa_2", "taa_3", "taa_4",
+                        "eot_taa_1", "eot_taa_2", "eot_taa_3", "eot_taa_4")
 
 # Composite variables that are calculated by summing subitems
 SUMMED_COMPOSITE_VARS <- c('phq', 'mid_phq', 'eot_phq', 'followup_phq',
@@ -16,7 +18,7 @@ SUMMED_COMPOSITE_VARS <- c('phq', 'mid_phq', 'eot_phq', 'followup_phq',
                            'sps', 'mid_sps','eot_sps', 
                            'dast', 'eot_dast',
                            'sipad', 'mid_sipad', 'eot_sipad', 'followup_sipad',
-                           'taa', 'eot_taa',
+                           # 'taa', 'eot_taa',
                            'mid_waisr_g', 'eot_waisr_g',
                            'mid_waisr_t', 'eot_waisr_t',
                            'mid_waisr_b', 'eot_waisr_b',
@@ -31,10 +33,16 @@ AVERAGED_COMPOSITE_VARS <- c('bscq', 'mid_bscq', 'eot_bscq', 'followup_bscq')
 P30_VARS <- c('p30', 'mid_p30', 'eot_p30', 'followup_p30')
 PST_P30_VARS <- c('pst_p30', 'mid_pst_p30', 'eot_pst_p30', 'followup_pst_p30')
 
+# Fill 99 with NA variables
+FILL_99_WITH_NA_VARS <- c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS, "taa_4", "eot_taa_4")
+
 # Outcome variables at baseline, 4-weeks (mid), 8-weeks (eot), and 12-weeks (followup)
-BASELINE_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 'crave', 'heavy', 'sipad', 'taa', 'qds')
+BASELINE_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 
+                           'crave', 'heavy', 'sipad', 
+                           'taa_1', 'taa_2', 'taa_3', 'taa_4', 'qds')
 MID_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'gad', 'phq', 'crave',  'heavy', 'sipad', 'qds')
-EOT_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 'crave', 'heavy', 'sipad', 'taa', 'qds')
+EOT_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'dast', 'gad', 'phq', 'sps', 'crave', 'heavy', 'sipad', 
+                      'taa_1', 'taa_2', 'taa_3', 'taa_4', 'qds')
 FOLLOWUP_OUTCOME_VARS <- c('p30', 'pst_p30', 'bscq', 'gad', 'phq', 'crave', 'heavy', 'sipad', 'qds')
 
 OUTCOME_VARS <- c(BASELINE_OUTCOME_VARS, EOT_OUTCOME_VARS, MID_OUTCOME_VARS, FOLLOWUP_OUTCOME_VARS)
@@ -75,7 +83,7 @@ SUBGROUP_VARS <- c('gender',
                    'screen',
                    'p30',
                    'qds',
-                   'taa',
+                   'taa_4', # TODO figure out good split for TAA subitems, maybe quit forever versus not?
                    'crave',
                    'mh',
                    'csq')

@@ -20,7 +20,9 @@ for (analysis_type in analysis_types) {
                  'marital', 'educ', 'empl', 'disab', 'insur',
                  'ther', 'trt', 'med', 'psych_med',
                  'mh', 'phq', 'gad', 'sps', 'pst_sub',
-                 'dast', 'sipad', 'cageaid', 'bscq', 'crave', 'taa', 'qds', 'p30_per_sub', 'p30')
+                 'dast', 'sipad', 'cageaid', 'bscq', 'crave', 
+                 'taa_1', 'taa_2', 'taa_3', 'taa_4', 
+                 'qds', 'p30_per_sub', 'p30')
   
   get_balance(dat_balance_table, c('group'), 
               var_names, save_prefix='grouped', save_dir, get_smd=TRUE)

@@ -18,7 +18,7 @@ reverse_code_sps_items <- function(dat) {
 #' @returns Dataframe with reverse coded URPI variable
 reverse_code_urpi_items <- function(dat) {
   dat <- dat |>
-    mutate(eot_urpi_f_5 = case_when(eot_urpi_f_5 != 99 ~ (6 - eot_urpi_f_5), .default=99))
+    mutate(eot_urpi_f_5 = case_when(eot_urpi_f_5 != 99 ~ (7 - eot_urpi_f_5), .default=99))
 }
 
 #' Recode SPS as a categorical variable to handle missingness due to branching logic

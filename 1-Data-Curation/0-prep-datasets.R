@@ -101,7 +101,7 @@ dat_not_ret_balance_table <- dat_rand_not_ret_base |>
   set_therapy_status() |>
   reverse_code_sps_items() |>
   reverse_code_urpi_items() |>
-  fill_99_with_na(c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS, AVERAGED_COMPOSITE_VARS)) |>
+  fill_99_with_na(FILL_99_WITH_NA_VARS) |>
   set_composite_sums(P30_VARS, exclude_substr = c('tob'), drop_items=FALSE, na_rm=TRUE) |>
   set_composite_sums(SUMMED_COMPOSITE_VARS, drop_items = FALSE) |>
   set_eot_csq () |>
@@ -116,7 +116,7 @@ dat_descriptive <- dat_rand_base |>
   collapse_multi() |>
   reverse_code_sps_items() |>
   reverse_code_urpi_items() |>
-  fill_99_with_na(c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS)) |>
+  fill_99_with_na(FILL_99_WITH_NA_VARS) |>
   fill_na_with_mean(SUMMED_COMPOSITE_VARS) |>
   set_composite_sums(P30_VARS, exclude_substr = c('tob'), drop_items=FALSE, na_rm=TRUE) |>
   fill_na_with_0(P30_VARS) |> # if '{timept}_p30' is NA, assume it is 0
@@ -138,7 +138,7 @@ dat_outcome_regression <- dat_rand_base |>
   collapse_multi() |>
   reverse_code_sps_items() |>
   reverse_code_urpi_items() |>
-  fill_99_with_na(c(P30_VARS, SUMMED_COMPOSITE_VARS, MULTIPLIED_COMPOSITE_VARS)) |>
+  fill_99_with_na(FILL_99_WITH_NA_VARS) |>
   set_composite_sums(P30_VARS, exclude_substr = c('tob'), drop_items=FALSE, na_rm=TRUE) |>
   fill_na_with_0(P30_VARS) |> # if '{timept}_p30' is missing, assume it is 0
   set_composite_sums(PST_P30_VARS, drop_items=FALSE, na_rm=TRUE) |>

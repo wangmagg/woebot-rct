@@ -782,11 +782,24 @@ get_qds_balance <- function(dat_input, grouping_var, get_smd) {
 #' @param dat_input Data
 #' @param grouping_var Name of variable that defines groups
 #' @param get_smd Boolean, compute SMD between groups if true
-get_taa_balance <- function(dat_input, grouping_var, get_smd) {
-  bal_df <- dat_input |> .get_contin_var_bal_df('taa', grouping_var)
+get_taa_balance <- function(taa_var_name, dat_input, grouping_var, get_smd) {
+  bal_df <- dat_input |> .get_contin_var_bal_df(taa_var_name, grouping_var)
   
   if (get_smd) {
-    smd_df <- dat_input |> .get_smd_df('taa', grouping_var)
+    smd_df <- dat_input |> .get_smd_df(taa_var_name, grouping_var)
+    return (list('bal' = bal_df,
+                 'smd' = smd_df))
+  }
+  return (list('bal' = bal_df))
+}
+
+get_taa_4_balance <- function(dat_input, grouping_var, get_smd) {
+  dat_input <- dat_input |>
+    mutate(taa_4 = factor(taa_4))
+  bal_df <- dat_input |> .get_factor_var_bal_df('taa_4', grouping_var)
+  
+  if (get_smd) {
+    smd_df <- dat_input |> .get_smd_df('taa_4', grouping_var)
     return (list('bal' = bal_df,
                  'smd' = smd_df))
   }
@@ -840,7 +853,10 @@ get_balance <- function(dat_input, grouping_var, var_names, save_prefix, save_di
       "p30_per_sub" = get_p30_per_sub_balance(dat_input, grouping_var, get_smd),
       "p30" = get_p30_balance(dat_input, grouping_var, get_smd),
       "qds" = get_qds_balance(dat_input, grouping_var, get_smd),
-      "taa" = get_taa_balance(dat_input, grouping_var, get_smd)
+      "taa_1" = get_taa_balance("taa_1", dat_input, grouping_var, get_smd),
+      "taa_2" = get_taa_balance("taa_2", dat_input, grouping_var, get_smd),
+      "taa_3" = get_taa_balance("taa_3", dat_input, grouping_var, get_smd),
+      "taa_4" = get_taa_4_balance(dat_input, grouping_var, get_smd)
     )
     write.csv(res$bal, file.path(save_dir, str_c(save_prefix, var_name, 'balance.csv', sep='_')), row.names=FALSE)
     if (get_smd) {

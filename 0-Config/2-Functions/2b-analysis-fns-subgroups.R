@@ -213,11 +213,17 @@ get_baseline_use_subgroups <- function(dat) {
 #' 
 #' @param dat Dataframe of survey data
 #' @returns 2-column dataframe with participant ID and subgroup label
+# get_taa_subgroups <- function(dat) {
+#   med_taa <- median(dat$taa, na.rm=TRUE)
+#   sugroups <- dat |>
+#     select(participant_id, taa) |>
+#     mutate(subgroup = factor(as.numeric(taa >= med_taa), ordered=FALSE)) |>
+#     select(participant_id, subgroup)
+# }
 get_taa_subgroups <- function(dat) {
-  med_taa <- median(dat$taa, na.rm=TRUE)
   sugroups <- dat |>
-    select(participant_id, taa) |>
-    mutate(subgroup = factor(as.numeric(taa >= med_taa), ordered=FALSE)) |>
+    select(participant_id, taa_4) |>
+    mutate(subgroup = factor(as.numeric(taa_4 != 6), ordered=FALSE)) |>
     select(participant_id, subgroup)
 }
 
@@ -298,7 +304,7 @@ get_subgrouping_fn <- function(subgroup_var) {
     "sipad" = get_sipad_subgroups,
     "screen" = get_screen_subgroups,
     "p30" = get_baseline_use_subgroups,
-    "taa" = get_taa_subgroups,
+    "taa_4" = get_taa_subgroups,
     "qds" = get_qds_subgroups,
     "crave" = get_crave_subgroups,
     "mh" = get_dx_subgroups,
