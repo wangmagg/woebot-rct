@@ -6,8 +6,8 @@ Statistical analyses for Phase II W-SUD trial.
 __Installation__ <br />
 To clone this repository, run the following <br />
 ```
-git clone https://github.com/wangmagg/woebot.git
-cd woebot
+git clone https://github.com/wangmagg/woebot-share.git
+cd woebot-share
 ```
 
 __R library dependencies__ <br />
@@ -19,24 +19,21 @@ renv::restore()
 ## File Descriptions
 
 <details>
-<summary><b>0-Config </b></summary>
+<summary><b>Data </b></summary>
 
-**`0-config.R`**: sources all config files
+  -   `dat_analysis_dictionary.xlsx`: contains definition for each variable, the possible values and ranges it can take on, and how it got calculated (if it was not imported from the questionnaires directly)
+  -   `dat_analysis_share.csv`: analytic dataset
 
-**`0-Files`**
+</details>
 
-  -   `dat_analysis_balance-table_dictionary.xlsx`: contains definition for each variable, the possible values and ranges it can take on, and how it got calculated (if it was not imported from the questionnaires directly)
-  -   `var_name_mapping.xlsx`: maps variable names from how they appear in the screening and survey questionnaires to ones that are more interpretable
 
-**`1-Setup`**
-
--   `1-libraries.R`: loads all necessary libraries
--   `2-input-paths.R`: pathnames for where data is stored (data contains PHI, so it is not uploaded in this repo)
--   `3-output-paths.R`: folder names for where script outputs should be saved
--   `4-constants.R`: variable constants that are shared across several scripts
-
-**`2-Functions`**
-
+<details>
+  <summary><b>Analysis </b></summary>
+  **`run-analysis.sh`**: bash script that executes all analyses
+  
+  **`config.R`**: loads all necessary libraries and defines variable constants that are shared across several scripts
+  
+  **`0-Functions`**
 -   `1a-data-fns-filling.R`: functions for imputing or replacing data values
 -   `1b-data-fns-loading.R`: functions for loading and merging raw data files
 -   `1c-data-fns-recoding.R`: functions for recoding (reverse coding, collapsing small categories) and for creating composite variables
@@ -46,76 +43,39 @@ renv::restore()
 -   `3a-analysis-fns-regressions.R`: functions used to run regression analyses (invoked for estimating treatment effects for primary and secondary outcome)
 -   `3b-analysis-fns-ttest.R`: functions used to perform t-tests (invoked for estimating treatment effects for primary and secondary outcomes, without covariate adjustment)
 -   `3c-analysis-fns-variable-selection.R`: functions used to select variables included in the regression analyses
--   `4-latexify-fns`: functions used to convert results into LaTeX table syntax 
 
-</details>
+  **`1-DataProcessing`**
+-   `run-data-processing.R`: constructs derivative datasets from `dat_analysis_shared.csv` for ease of use in analyses
 
-<details>
-  <summary><b> 1-Data-Curation </b></summary>
-  
-  -   `0-prep-datasets.R`: loads raw data files and constructs analytic datasets
-</details>
+  **`2-Descriptives`**
 
-<details>
-  <summary><b>2-Analysis </b></summary>
-  
-  **`0-run-analysis.sh`**: bash script that executes all analyses
+-   `run-descriptives.R`: runs all descriptive analysis (1-3 detailed below)
+-   `1-balance-table.R`: creates and saves balance tables
+-   `2-outcome-vars-summary.R`: creates and saves descriptive summaries of outcome variables
+-   `3-differential-dropout-check.R`: compares participants who were randomized to those who were removed or withdrawn from the study
 
-  **`1-Descriptives`**
+**`3-Effects`**
 
--   `0-run-descriptives.R`: runs all descriptive analysis (1a-3b detailed below)
--   `1a-balance-table.R`: creates and saves balance tables
--   `1b-tobacco-balance-table.R`: creates and saves balance tables and other descriptives for tobacco users
--   `2a-outcome-vars-visualization.R`: creates and saves histograms, scatterplots, boxplots, and correlation maps of outcome variables
--   `2b-outcome-vars-summary.R`: creates and saves descriptive summaries of outcome variables
--   `3a-missingness.R`: creates and saves summaries of data missingness
--   `3b-outliers.R`: creates and saves descriptive summary of participants who have high (\> 90 days) past 30-day substance us
-
-**`2-Effects`**
-
--   `0-run-effects.R`: runs all effect estimation analysis (1-3 detailed below)
+-   `run-effects.R`: runs all effect estimation analysis (1-3 detailed below)
 -   `1-assumptions.R`: visual checks on linear regression assumptions
 -   `2a-between-group-primary.R`: estimates treatment effects for primary outcome (past 30-day substance use days) and tests for treatment effect heterogeneity
 -   `2b-between-group-secondary.R`: estimates treatment effects for secondary outcomes and tests for treatment effect heterogeneity
 -   `2c-pval-adjust.R`: adjusts secondary outcome p-values
 -   `3-within-group`: calculates within group "effect size" for primary and secondary outcomes by comparing pre- and post- data within intervention arms
 
-**`3-Engagement`**
+**`4-Engagement`**
 
--   `0-run-engagement.R`: runs all engagement analysis (1-3 detailed below)
+-   `run-engagement.R`: runs all engagement analysis (1-3 detailed below)
 -   `1-acc-fea.R`: summarizes accessibility and feasibility scores and estimates correlation with past 30-day substance use days
 -   `2-control-pdf.R`: summarizes control group's self-reported and submission-tracked engagement with psychoeducational PDFs
--   `3-app-engage-summary.R`: summarizes WSUDs group's app engagement metrics
 
-**`4-BivarCorrelations`**
+**`5-BivarCorrelations`**
 
--   `0-bivariate-corr.R`: calculates bivariate correlations across subset of outcome variables
-
-</details>
-
-<details>
-  <summary> <b> 3-Latexify </b> </summary>
-
-  -   `0-latexify.sh`: runs all latexify scripts (1-2 below)
-  -   `1a-to-latex-itt.R`: saves results as LaTeX strings to make it easier to create the tables in the reports shared with the W-SUDS team (ITT analysis)
-  -   `1b-to-latex-pp.R`: saves results as LaTeX strings to make it easier to create the tables in the reports shared with the W-SUDS team (per-protocol analysis)
-</details>
+-   `run-bivariate-corr.R`: calculates bivariate correlations across subset of outcome variables and compares correlations across arms
 
 ## Running
 
-To run **all data curation, analysis, and latexify scripts**: </br>
+To run **all analyses**: </br>
 ```
-bash ./0-run-woebot.sh
-```
-To run **data curation only**: </br>
-```
-Rscript 1-Data-Curation/0-prep-datasets.R
-```
-To run **analysis only**: </br>
-```
-bash 2-Analysis/0-run-analysis.sh
-```
-To run **latexification only**: </br>
-```
-bash 3-Latexify/0-latexify.sh
+bash ./Analysis/run-analysis.sh
 ```

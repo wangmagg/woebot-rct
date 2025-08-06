@@ -1,0 +1,68 @@
+source('Analysis/config.R')
+
+# Load helper functions
+for (file in list.files('Analysis/0-Functions', full.names=TRUE)) {
+  source(file)
+}
+
+# Define directory for saving results
+save_dir <- file.path(ANALYSIS_OUT_DIR, '4-Engagement-Output', '2-Control-PDF')
+
+if (!dir.exists(save_dir)) {
+  dir.create(save_dir, recursive = TRUE)
+}
+
+# Read input data files
+dat_rand_ret_base <- read_csv(file.path(DATA_OUT_DIR, 'dat_analysis_rand-ret-base.csv'), show_col_types=FALSE) |>
+  subset_has_eot()
+
+# Summarize weekly engagement in control group
+dat_pdf_summary <- dat_rand_ret_base |> 
+  mutate(actual = rowSums(across(w1_complete:w8_complete), na.rm=TRUE)) |>
+  select(participant_id, actual)
+
+# Check for consistency with self-report
+dat_pdf_self_rep_actual <- dat_rand_ret_base |>
+  filter(group == 2) |>
+  left_join(dat_pdf_summary, by = c('participant_id')) |>
+  rename(self_report = eot_pdf_cnt) |>
+  mutate(discrep = actual - self_report) |>
+  select(participant_id, actual, self_report, discrep)
+
+# Summarize number of participants who opened PDF's each week
+dat_pdf_summary_by_week <- dat_rand_ret_base |>
+  filter(group == 2) |>
+  summarize(across(w1_complete:w8_complete, 
+                   .fns = list(n = ~sum(.x, na.rm=TRUE),
+                               p = ~sum(.x, na.rm=TRUE) / n()),
+                   .names='{.fn}_{.col}'))
+write.csv(dat_pdf_summary_by_week, 
+          file.path(save_dir, 'summary_by_week.csv'), row.names=FALSE)
+
+# Summarize by number of participants who opened certain number of PDFs
+dat_pdf_self_rep_actual_long <- dat_pdf_self_rep_actual |>
+  pivot_longer(cols=c(actual, self_report, discrep), 
+               names_to='measure', 
+               values_to='cnt')
+
+dat_pdf_summary_by_measure_and_cnt <- dat_pdf_self_rep_actual_long |>
+  group_by(measure, cnt) |>
+  summarize(n = n(), .groups='keep') |>
+  ungroup(cnt) |>
+  mutate(p = n / sum(n) * 100) |>
+  ungroup()
+write.csv(dat_pdf_summary_by_measure_and_cnt, 
+          file.path(save_dir, 'summary_by_measure_and_cnt.csv'), row.names=FALSE)
+
+dat_pdf_summary_by_measure <- dat_pdf_self_rep_actual_long |>
+  group_by(measure) |>
+  summarize(mean_cnt = mean(cnt, na.rm=TRUE), 
+            sd_cnt = sd(cnt, na.rm=TRUE),
+            median_cnt = median(cnt, na.rm=TRUE),
+            n_atleast_4 = sum(cnt >= 4, na.rm=TRUE),
+            p_atleast_4 = n_atleast_4 / n(), 
+            n_any = sum(cnt > 0, na.rm=TRUE),
+            p_any = n_any / n(),
+            .groups='drop')
+write.csv(dat_pdf_summary_by_measure, 
+          file.path(save_dir, 'summary_by_measure.csv'), row.names=FALSE)
