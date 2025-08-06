@@ -15,12 +15,12 @@ for (analysis_type in analysis_types) {
   }
   
   res_dir_pri <- file.path(ANALYSIS_OUT_DIR, 
-                       '2-Effects-Output', 
+                       '3-Effects-Output', 
                        '2a-Between-Group-Primary',
                        analysis_type)
   
   res_dir_sec <- file.path(ANALYSIS_OUT_DIR, 
-                           '2-Effects-Output', 
+                           '3-Effects-Output', 
                            '2b-Between-Group-Secondary',
                            analysis_type)
   

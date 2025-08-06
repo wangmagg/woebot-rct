@@ -11,5 +11,5 @@ Rscript Analysis/3-Effects/run-effects.R
 echo "Analysis/4-Engagement/0-run-engagement.R"
 Rscript Analysis/4-Engagement/run-engagement.R
 
-echo "Analysis/5-BivarCorrelations/0-bivariate-corr.R"
-Rscript Analysis/5-BivarCorrelations/bivariate-corr.R
+echo "Analysis/5-BivarCorrelations/run-bivariate-corr.R"
+Rscript Analysis/5-BivarCorrelations/run-bivariate-corr.R
